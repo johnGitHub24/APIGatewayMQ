@@ -1,0 +1,80 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: trading-engine
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/trading}
+    username: ${SPRING_DATASOURCE_USERNAME:trading}
+    password: ${SPRING_DATASOURCE_PASSWORD:trading}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:trading-engine}
+
+trading:
+  risk:
+    max-position-per-symbol: 100
+    max-total-exposure: 1000000
+    duplicate-window-seconds: 60
+    default-volatility-index: 0.30
+    extreme-volatility-index: 0.95
+    max-volatility-index: 0.80
+    overtrading-window-seconds: 60
+    max-orders-per-window: 200
+    partial-fill-threshold: 10
+    partial-fill-ratio: 0.50
+    min-trend-strength: 0.40
+    max-signal-noise: 0.70
+    reduce-volatility-threshold: 0.65
+    volatility-reduce-ratio: 0.50
+    discipline-order-threshold: 30
+  job:
+    stale-order:
+      enabled: ${JOB_STALE_ORDER_ENABLED:true}
+      timeout-seconds: ${JOB_STALE_ORDER_TIMEOUT_SECONDS:300}
+      batch-size: 200
+      cron: ${JOB_STALE_ORDER_CRON:0 */5 * * * *}
+    pnl-snapshot:
+      enabled: ${JOB_PNL_SNAPSHOT_ENABLED:true}
+      cron: ${JOB_PNL_SNAPSHOT_CRON:0 0 0 * * *}
+    retry:
+      enabled: ${JOB_RETRY_ENABLED:true}
+      max-attempts: 3
+      backoff-seconds: 30
+      batch-size: 100
+      cron: ${JOB_RETRY_CRON:0 * * * * *}
+    cleanup:
+      enabled: ${JOB_CLEANUP_ENABLED:true}
+      event-retention-days: 30
+      failed-command-retention-days: 7
+      batch-size: 500
+      cron: ${JOB_CLEANUP_CRON:0 30 0 * * *}
+  cors:
+    allowed-origins: "*"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      application: trading-engine
+      instance: ${HOSTNAME:local}
+
+logging:
+  level:
+    com.trading.engine: INFO
+    com.trading.application: INFO
+    com.trading.engine.job: INFO
+    org.apache.kafka: WARN

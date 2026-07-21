@@ -1,0 +1,10 @@
+sequenceDiagram
+  participant C as Client
+  participant G as Gateway :8080
+  participant K as Kafka
+  participant E as Engine :8081
+  C->>G: POST orders
+  G->>K: order.commands
+  G-->>C: 202 pollUrl
+  K->>E: OrderCommandConsumer
+  E->>E: TradingService.placeOrder

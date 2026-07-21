@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>APIGatewayMQ — API 文件（Swagger UI）</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui.css"/>
+  <style>
+    :root { --bg:#0f1419; --surface:#1a2332; --surface2:#243044; --border:#2d3a4f; --text:#e6edf3; --muted:#8b9cb3; --accent:#3b82f6; --accent2:#10b981; --warn:#f59e0b; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#fafafa; font-family:"Segoe UI","Microsoft JhengHei",sans-serif; }
+    header.intro { background:linear-gradient(135deg,#1e3a5f 0%,#0f1419 70%); color:var(--text); padding:1.5rem 2rem; line-height:1.6; }
+    header.intro h1 { font-size:1.4rem; margin:0 0 0.25rem; }
+    header.intro .sub { color:var(--muted); font-size:0.9rem; margin:0 0 1rem; }
+    header.intro .links a { color:var(--accent); text-decoration:none; margin-right:1rem; font-size:0.9rem; }
+    .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:0.75rem; margin-top:0.5rem; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:0.8rem 1rem; font-size:0.85rem; }
+    .card h2 { font-size:0.85rem; color:var(--accent2); margin:0 0 0.5rem; }
+    .card table { width:100%; border-collapse:collapse; }
+    .card td { padding:0.15rem 0.3rem 0.15rem 0; color:#c9d4e3; vertical-align:top; }
+    .card td:first-child { color:var(--muted); white-space:nowrap; }
+    .card code { background:#0d1117; color:#79c0ff; padding:0.1rem 0.35rem; border-radius:4px; font-size:0.85em; }
+    .card ul { margin:0; padding-left:1.1rem; color:#c9d4e3; }
+    .card li { margin-bottom:0.2rem; }
+    .note { margin-top:0.75rem; background:var(--surface2); border-left:3px solid var(--warn); padding:0.6rem 0.9rem; font-size:0.82rem; color:var(--muted); border-radius:0 8px 8px 0; }
+    .note code { background:#0d1117; color:#79c0ff; padding:0.1rem 0.35rem; border-radius:4px; }
+    #swagger-ui { max-width:1200px; margin:0 auto; }
+  </style>
+</head>
+<body>
+<header class="intro">
+  <h1>APIGatewayMQ — API 文件</h1>
+  <p class="sub">非同步下單削峰 · Kafka Consumer Group · 冪等 · 風控／狀態機 · gateway（WebFlux :8080）+ engine（:8081／多副本）· Redis 限流 · PostgreSQL</p>
+  <p class="links">
+    <a href="codeGraphic.html">CodeGraphic</a>
+    <a href="md-viewer.html?src=../API%E8%A6%8F%E6%A0%BC%E6%9B%B8.md">API 規格書</a>
+    <a href="md-viewer.html?src=architecture.md">architecture.md</a>
+    <a href="http://localhost:8080/swagger-ui.html" target="_blank">Gateway Swagger（:8080）</a>
+    <a href="http://localhost:8081/swagger-ui.html" target="_blank">Engine Swagger（:8081）</a>
+  </p>
+  <div class="cards">
+    <div class="card">
+      <h2>啟動與位址</h2>
+      <table>
+        <tr><td>啟動</td><td>先起基礎設施（Kafka／Redis／PostgreSQL，Docker），再 <code>.\gradlew.bat :engine:bootRun</code>、<code>:gateway:bootRun</code></td></tr>
+        <tr><td>gateway</td><td><code>:8080</code>（WebFlux）· JSON <code>/v3/api-docs</code></td></tr>
+        <tr><td>engine</td><td><code>:8081</code>（可多副本，第二副本常用 <code>:8082</code>）· JSON <code>/v3/api-docs</code></td></tr>
+        <tr><td>驗證</td><td><code>.\scripts\check.ps1</code>（= <code>gradlew check</code>，unit + integration）</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>API 分組（實際 Controller）</h2>
+      <ul>
+        <li><b>Gateway 下單</b>：<code>POST /api/v1/orders</code>（202 進 Kafka 削峰；Redis 限流）</li>
+        <li><b>Gateway 代理</b>：<code>GET /api/v1/**</code> 轉發 Engine；<code>POST /api/v1/orders/{id}/fill</code>、<code>PATCH /api/v1/orders/{id}/cancel</code></li>
+        <li><b>Engine Orders</b>：<code>POST/GET /api/v1/orders</code>、<code>GET /{orderId}</code>、<code>GET ?clientOrderId=...</code>、<code>GET /{orderId}/events</code>、<code>POST /{orderId}/fill</code>、<code>PATCH /{orderId}/cancel</code></li>
+        <li><b>Engine 查詢</b>：<code>GET /api/v1/trades</code>／<code>/{tradeId}</code>、<code>GET /api/v1/positions</code>／<code>/{symbol}</code>、<code>GET /api/v1/pnl</code></li>
+        <li><b>Engine Jobs</b>：<code>POST /api/v1/jobs/stale-order-cancellation</code>／<code>pnl-snapshot</code>／<code>failed-command-retry</code>／<code>cleanup</code>、<code>GET /api/v1/pnl-snapshots</code>、<code>GET /api/v1/failed-commands</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>認證與範例流程</h2>
+      <ul>
+        <li>無認證（無 Spring Security／JWT）；Gateway 有 Redis 限流（預設 50 req/s）。</li>
+        <li>冪等：下單帶 <code>clientOrderId</code>，重送同 id 不重複建單。</li>
+        <li>範例：<code>POST :8080/api/v1/orders</code>（202 ACCEPTED，訊息進 Kafka）→ Engine 消費落庫 → <code>GET :8080/api/v1/orders?clientOrderId=...</code> 查最終狀態 → <code>POST /{id}/fill</code>、<code>GET /api/v1/pnl</code>。</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">
+    右上下拉可切換 Gateway／Engine 的 <b>live</b> <code>/v3/api-docs</code>（需先啟動服務），以及 docs 內的<b>靜態 yaml 匯出／規格</b>（免啟動可看）。
+    若以 <code>file://</code> 直接開啟本頁，live 來源會因 CORS 無法載入，請改用各服務 <code>/swagger-ui.html</code>，或在 docs 目錄啟一個靜態伺服器（例如 <code>python -m http.server</code>）。
+  </p>
+</header>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js" crossorigin></script>
+<script>
+  window.onload = function () {
+    window.ui = SwaggerUIBundle({
+      urls: [
+        { name: "Gateway API（live :8080）", url: "http://localhost:8080/v3/api-docs" },
+        { name: "Engine API（live :8081）", url: "http://localhost:8081/v3/api-docs" },
+        { name: "Gateway API（靜態 live 匯出）", url: "./openapi-gateway-live.yaml" },
+        { name: "Gateway API（靜態規格）", url: "./openapi-gateway.yaml" },
+        { name: "Engine API（靜態 live 匯出）", url: "./openapi-engine-live.yaml" },
+        { name: "Engine API（靜態規格）", url: "./openapi-engine.yaml" }
+      ],
+      "urls.primaryName": "Gateway API（live :8080）",
+      dom_id: "#swagger-ui",
+      deepLinking: true,
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+      plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+      layout: "StandaloneLayout"
+    });
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+flowchart TB
+  K[Kafka order.commands] --> C[OrderCommandConsumer]
+  C --> TS[TradingService]
+  TS --> RE[RiskEngine]
+  TS --> PG[(PostgreSQL)]
+  G[Gateway proxy] --> API[Engine REST]
+  API --> TS

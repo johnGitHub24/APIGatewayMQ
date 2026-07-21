@@ -1,0 +1,586 @@
+openapi: 3.0.3
+info:
+  title: APIGatewayMQ Engine API
+  description: |
+    交易引擎 REST API：同步下單、風控、持倉、PnL、成交查詢。
+    亦可經 Gateway (`:8080`) Round-Robin 代理存取。
+    錯誤回應格式為 RFC 7807 Problem Details（`application/problem+json`），`errorCode` 於頂層。
+  version: v1
+  contact:
+    name: APIGatewayMQ
+servers:
+  - url: http://localhost:8081
+    description: Trading Engine（直連）
+  - url: http://localhost:8080
+    description: API Gateway（查詢/補成交/取消經代理）
+
+tags:
+  - name: Orders
+    description: 訂單下單與查詢
+  - name: Trades
+    description: 成交紀錄
+  - name: Positions
+    description: 持倉
+  - name: PnL
+    description: 損益摘要
+
+paths:
+  /api/v1/orders:
+    post:
+      tags: [Orders]
+      summary: 同步下單（Engine 直連）
+      description: |
+        經 Gateway 呼叫時請使用 Gateway 非同步端點（202）。
+        本端點僅在直連 Engine 時回 201。
+      operationId: placeOrder
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            example:
+              symbol: BTCUSDT
+              side: BUY
+              quantity: 0.5
+              price: 65000
+      responses:
+        '201':
+          description: 訂單已建立（可能 FILLED / PARTIALLY_FILLED / REJECTED）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/DuplicateOrder'
+        '422':
+          $ref: '#/components/responses/RiskRejected'
+    get:
+      tags: [Orders]
+      summary: 訂單列表
+      operationId: listOrders
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: clientOrderId
+          in: query
+          description: 依冪等鍵查詢單筆（與 symbol/status 分頁查詢互斥）
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 分頁訂單列表，或依 clientOrderId 回傳單筆
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/PagedOrderResponse'
+                  - $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: 查詢單筆訂單（含成交）
+      operationId: getOrder
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: 訂單詳情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/orders/{orderId}/events:
+    get:
+      tags: [Orders]
+      summary: 訂單審計事件鏈
+      operationId: getOrderEvents
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: 事件時間軸
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderEventsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/orders/{orderId}/fill:
+    post:
+      tags: [Orders]
+      summary: 補足部分成交
+      operationId: completeFill
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: 更新後訂單
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InvalidOrderState'
+
+  /api/v1/orders/{orderId}/cancel:
+    patch:
+      tags: [Orders]
+      summary: 取消訂單
+      operationId: cancelOrder
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: 已取消
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InvalidOrderState'
+
+  /api/v1/trades:
+    get:
+      tags: [Trades]
+      summary: 成交列表
+      operationId: listTrades
+      parameters:
+        - name: orderId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 分頁成交
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedTradeResponse'
+
+  /api/v1/trades/{tradeId}:
+    get:
+      tags: [Trades]
+      summary: 單筆成交
+      operationId: getTrade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 成交詳情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/positions:
+    get:
+      tags: [Positions]
+      summary: 持倉列表
+      operationId: listPositions
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 分頁持倉
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedPositionResponse'
+
+  /api/v1/positions/{symbol}:
+    get:
+      tags: [Positions]
+      summary: 單一標的持倉
+      operationId: getPosition
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 持倉
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/pnl:
+    get:
+      tags: [PnL]
+      summary: PnL 摘要
+      operationId: getPnL
+      responses:
+        '200':
+          description: 未實現損益彙總
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PnLResponse'
+
+components:
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      description: 冪等鍵，對應 client_order_id
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    Size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+  responses:
+    ValidationError:
+      description: 請求驗證失敗
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemError'
+          example:
+            type: about:blank
+            title: Validation Failed
+            status: 400
+            detail: Request validation failed
+            errorCode: VALIDATION_FAILED
+            errors:
+              - field: symbol
+                message: symbol must not be blank
+    RiskRejected:
+      description: 風控拒絕
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemError'
+          example:
+            type: about:blank
+            title: Position Limit Exceeded
+            status: 422
+            detail: Position limit exceeded for symbol BTCUSDT
+            errorCode: RISK_POSITION_LIMIT
+            ruleCode: R001
+    DuplicateOrder:
+      description: 冪等鍵重複
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemError'
+          example:
+            type: about:blank
+            title: Duplicate Order
+            status: 409
+            detail: Duplicate order with same Idempotency-Key
+            errorCode: DUPLICATE_ORDER
+            ruleCode: R004
+    InvalidOrderState:
+      description: 訂單狀態不允許此操作
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemError'
+    NotFound:
+      description: 資源不存在
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemError'
+          example:
+            type: about:blank
+            title: Order Not Found
+            status: 404
+            detail: Order not found
+            errorCode: ORDER_NOT_FOUND
+
+  schemas:
+    OrderSide:
+      type: string
+      enum: [BUY, SELL]
+    OrderStatus:
+      type: string
+      enum: [NEW, PARTIALLY_FILLED, FILLED, REJECTED, CANCELLED]
+    OrderEventType:
+      type: string
+      enum:
+        - RECEIVED
+        - RISK_CHECK
+        - APPROVED
+        - REJECTED
+        - PARTIALLY_FILLED
+        - FILLED
+        - CANCELLED
+        - OUTCOME_RECORDED
+        - DISCIPLINE_FLAG
+        - POSITION_UPDATED
+
+    CreateOrderRequest:
+      type: object
+      required: [symbol, side, quantity, price]
+      properties:
+        clientOrderId:
+          type: string
+        symbol:
+          type: string
+          example: BTCUSDT
+        side:
+          $ref: '#/components/schemas/OrderSide'
+        quantity:
+          type: number
+          format: double
+          exclusiveMinimum: 0
+        price:
+          type: number
+          format: double
+          exclusiveMinimum: 0
+
+    OrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        clientOrderId:
+          type: string
+        symbol:
+          type: string
+        side:
+          $ref: '#/components/schemas/OrderSide'
+        quantity:
+          type: number
+        filledQuantity:
+          type: number
+        price:
+          type: number
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        rejectReason:
+          type: string
+        riskRuleCode:
+          type: string
+        trade:
+          $ref: '#/components/schemas/TradeResponse'
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeResponse'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TradeResponse:
+      type: object
+      properties:
+        executedPrice:
+          type: number
+        executedQty:
+          type: number
+        executedAt:
+          type: string
+          format: date-time
+
+    TradeDetailResponse:
+      type: object
+      properties:
+        tradeId:
+          type: integer
+          format: int64
+        orderId:
+          type: integer
+          format: int64
+        executedPrice:
+          type: number
+        executedQty:
+          type: number
+        executedAt:
+          type: string
+          format: date-time
+
+    OrderEventsResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              event:
+                $ref: '#/components/schemas/OrderEventType'
+              riskRuleCode:
+                type: string
+              rejectReason:
+                type: string
+              payloadJson:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+
+    PositionResponse:
+      type: object
+      properties:
+        symbol:
+          type: string
+        quantity:
+          type: number
+        avgPrice:
+          type: number
+        unrealizedPnl:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+
+    PnLResponse:
+      type: object
+      properties:
+        totalUnrealizedPnl:
+          type: number
+        asOf:
+          type: string
+          format: date-time
+        positions:
+          type: array
+          items:
+            type: object
+            properties:
+              symbol:
+                type: string
+              unrealizedPnl:
+                type: number
+
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    PagedOrderResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    PagedTradeResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeDetailResponse'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    PagedPositionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionResponse'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    ProblemError:
+      type: object
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        errorCode:
+          type: string
+          description: |
+            常見值：VALIDATION_FAILED, RISK_POSITION_LIMIT, RISK_INVALID_ORDER,
+            DUPLICATE_ORDER, ORDER_NOT_FOUND, RISK_VOLATILITY_LIMIT, RISK_MARKET_CHOPPY 等
+        ruleCode:
+          type: string
+          description: 風控規則代碼（如 R001, R003, R004, R007）
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string

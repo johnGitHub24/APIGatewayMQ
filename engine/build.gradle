@@ -1,0 +1,68 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation project(':common')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.awaitility:awaitility:4.2.0'
+}
+
+bootJar {
+    archiveBaseName = 'trading-engine'
+}
+
+def testJvmArgs = ['-Djdk.attach.allowAttachSelf=true']
+
+tasks.named('test') {
+    description = 'Runs unit tests (excludes @Tag integration)'
+    workingDir = rootProject.projectDir
+    maxParallelForks = 1
+    minHeapSize = "128m"
+    maxHeapSize = "384m"
+    jvmArgs = testJvmArgs
+    useJUnitPlatform {
+        excludeTags 'integration', 'openapi'
+    }
+}
+
+tasks.register('exportOpenApi', Test) {
+    description = 'Exports live OpenAPI YAML to docs/openapi-*-live.yaml'
+    group = 'documentation'
+    workingDir = rootProject.projectDir
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'openapi'
+    }
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests (@Tag integration)'
+    group = 'verification'
+    workingDir = rootProject.projectDir
+    maxParallelForks = 1
+    jvmArgs = testJvmArgs
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    shouldRunAfter tasks.named('test')
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('integrationTest')
+}

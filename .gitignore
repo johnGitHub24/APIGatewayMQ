@@ -1,0 +1,23 @@
+# Build
+build/
+.gradle/
+out/
+bin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# JVM crash logs
+hs_err_pid*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# eos-minimal onboard
+node_modules/
+bash.exe.stackdump
+.env
+replay_pid*.log

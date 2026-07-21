@@ -1,0 +1,8 @@
+{
+  "commandId": "cmd-test-001",
+  "clientOrderId": "mq-test-001",
+  "symbol": "BTCUSDT",
+  "side": "BUY",
+  "quantity": 0.5,
+  "price": 65000
+}

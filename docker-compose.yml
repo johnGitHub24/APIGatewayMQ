@@ -1,0 +1,203 @@
+# -----------------------------------------
+# docker-compose.yml（本機教學版全棧）
+# -----------------------------------------
+# 架構概覽：
+# - postgres / redis / zookeeper / kafka：基礎設施
+# - engine-1 / engine-2：交易引擎副本
+# - gateway：API 入口 + 限流 + Kafka producer
+# - prometheus / grafana：監控與視覺化
+#
+# 啟動：
+#   docker compose up -d --build
+#
+# 停止：
+#   docker compose down
+
+services:
+  # ---------------------------
+  # PostgreSQL（交易主資料庫）
+  # ---------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: agmq-postgres
+    environment:
+      POSTGRES_DB: trading
+      POSTGRES_USER: trading
+      POSTGRES_PASSWORD: trading
+    ports:
+      # 左邊是本機 port，右邊是容器內 port
+      # 用 5433 避免與你本機既有 PostgreSQL 5432 衝突
+      - "5433:5432"
+    volumes:
+      - agmq_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      # 直到 DB 可連線，其他依賴它的服務才算 ready
+      test: ["CMD-SHELL", "pg_isready -U trading -d trading"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------
+  # Redis（快取 / 限流狀態）
+  # ---------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: agmq-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------
+  # Zookeeper（Kafka 協調元件）
+  # ---------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: agmq-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # ---------------------------
+  # Kafka（訊息佇列）
+  # ---------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: agmq-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      # Kafka 連到 zookeeper 的位址（容器網路名稱）
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # 兩組 listener：
+      # - PLAINTEXT://kafka:29092 給容器內服務用
+      # - PLAINTEXT_HOST://localhost:9092 給本機工具用
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # ---------------------------
+  # Engine 副本 #1
+  # ---------------------------
+  engine-1:
+    build:
+      context: .
+      dockerfile: engine/Dockerfile
+    container_name: agmq-engine-1
+    depends_on:
+      # condition: service_healthy 代表依賴服務健康後才啟動
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      # 容器內連資料庫：用服務名 postgres + 容器埠 5432
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/trading
+      SPRING_DATASOURCE_USERNAME: trading
+      SPRING_DATASOURCE_PASSWORD: trading
+      # 容器內 Kafka 請用 kafka:29092，不是 localhost:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_CONSUMER_GROUP_ID: trading-engine
+      HOSTNAME: engine-1
+    ports:
+      - "8081:8081"
+
+  # ---------------------------
+  # Engine 副本 #2
+  # ---------------------------
+  engine-2:
+    build:
+      context: .
+      dockerfile: engine/Dockerfile
+    container_name: agmq-engine-2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/trading
+      SPRING_DATASOURCE_USERNAME: trading
+      SPRING_DATASOURCE_PASSWORD: trading
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_CONSUMER_GROUP_ID: trading-engine
+      HOSTNAME: engine-2
+    ports:
+      # 對外映射成 8082，內部仍跑 8081
+      - "8082:8081"
+
+  # ---------------------------
+  # Gateway（對外 API 入口）
+  # ---------------------------
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: agmq-gateway
+    depends_on:
+      - redis
+      - kafka
+      - engine-1
+      - engine-2
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      # Gateway 透過服務名呼叫兩個引擎副本
+      ENGINE_URI_1: http://engine-1:8081
+      ENGINE_URI_2: http://engine-2:8081
+      # 每個時間窗允許的請求數（限流門檻）
+      GATEWAY_RATE_LIMIT: 100
+    ports:
+      - "8080:8080"
+
+  # ---------------------------
+  # Prometheus（抓取 metrics）
+  # ---------------------------
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: agmq-prometheus
+    volumes:
+      # 掛載你的抓取設定檔（唯讀）
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - gateway
+      - engine-1
+      - engine-2
+
+  # ---------------------------
+  # Grafana（監控圖表）
+  # ---------------------------
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: agmq-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      # 教學環境預設帳密，正式環境請改掉
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    depends_on:
+      - prometheus
+
+volumes:
+  # PostgreSQL 永久資料卷，避免容器重啟資料消失
+  agmq_pg_data:

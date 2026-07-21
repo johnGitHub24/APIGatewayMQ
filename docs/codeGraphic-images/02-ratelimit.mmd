@@ -1,0 +1,6 @@
+flowchart LR
+  R[Request] --> RL[RateLimitWebFilter]
+  RL --> Redis[(Redis counter)]
+  RL -->|under limit| G[Gateway handler]
+  RL -->|over limit| E429[429]
+  Redis -->|down| G

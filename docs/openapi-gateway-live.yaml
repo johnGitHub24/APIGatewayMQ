@@ -1,0 +1,116 @@
+openapi: 3.0.1
+info:
+  title: APIGatewayMQ Gateway API
+  description: |
+    API Gateway 入口：非同步下單（202 + Kafka）、限流、查詢代理至 Engine。
+    靜態合併規格見 `docs/openapi.yaml`。
+  version: v1
+servers:
+- url: http://localhost:8080
+  description: API Gateway
+paths:
+  /api/v1/orders:
+    post:
+      tags:
+      - order-submit-controller
+      operationId: submitOrder
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayOrderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/OrderAcceptedResponse'
+  /api/v1/orders/{id}/fill:
+    post:
+      tags:
+      - engine-proxy-controller
+      operationId: proxyPostFill
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: byte
+  /api/v1/orders/{id}/cancel:
+    patch:
+      tags:
+      - engine-proxy-controller
+      operationId: proxyPatch
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: byte
+  /api/v1/**:
+    get:
+      tags:
+      - engine-proxy-controller
+      operationId: proxyGet
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: byte
+components:
+  schemas:
+    GatewayOrderRequest:
+      required:
+      - price
+      - quantity
+      - side
+      - symbol
+      type: object
+      properties:
+        clientOrderId:
+          type: string
+        symbol:
+          type: string
+        side:
+          type: string
+        quantity:
+          type: number
+        price:
+          type: number
+    OrderAcceptedResponse:
+      type: object
+      properties:
+        commandId:
+          type: string
+        clientOrderId:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        pollUrl:
+          type: string
+        acceptedAt:
+          type: string
+          format: date-time

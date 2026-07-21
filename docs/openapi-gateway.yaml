@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: APIGatewayMQ Gateway API
+  description: |
+    API Gateway 入口（WebFlux :8080）。
+    - **非同步下單**：POST `/api/v1/orders` → 202 + Kafka
+    - **查詢/補成交/取消**：代理至 Engine（Round-Robin）
+    - **限流**：Redis 固定窗口，超過回 429
+  version: v1
+servers:
+  - url: http://localhost:8080
+    description: API Gateway
+
+tags:
+  - name: Async Orders
+    description: Gateway 專用非同步下單
+  - name: Proxy
+    description: 代理至 Engine 的讀寫 API（路徑與 Engine 相同）
+
+paths:
+  /api/v1/orders:
+    post:
+      tags: [Async Orders]
+      summary: 非同步下單（Gateway 專用）
+      description: |
+        快速回 202 Accepted，訊息寫入 Kafka topic `order.commands`（partition key = symbol）。
+        使用 `pollUrl` 或 `GET /api/v1/orders?clientOrderId=` 輪詢結果。
+      operationId: submitOrderAsync
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayOrderRequest'
+            example:
+              symbol: BTCUSDT
+              side: BUY
+              quantity: 0.5
+              price: 65000
+      responses:
+        '202':
+          description: 已接受並排入 Kafka
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAcceptedResponse'
+              example:
+                commandId: 550e8400-e29b-41d4-a716-446655440000
+                clientOrderId: demo-order-001
+                status: ACCEPTED
+                message: Order queued for processing
+                pollUrl: /api/v1/orders?clientOrderId=demo-order-001
+                acceptedAt: '2026-07-06T05:00:00Z'
+        '400':
+          description: 請求驗證失敗
+        '429':
+          description: 超過限流閾值
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+              example:
+                errorCode: RATE_LIMIT_EXCEEDED
+                message: Too many requests, retry later
+          headers:
+            Retry-After:
+              schema:
+                type: string
+              description: 建議重試間隔（秒）
+        '503':
+          description: Kafka 發送失敗
+    get:
+      tags: [Proxy]
+      summary: 查詢訂單（代理至 Engine）
+      description: 支援分頁參數或 `?clientOrderId=` 輪詢非同步下單結果。
+      operationId: proxyListOrders
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: clientOrderId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Engine 回應（原樣代理）
+
+  /api/v1/orders/{orderId}:
+    get:
+      tags: [Proxy]
+      summary: 查詢單筆訂單（代理）
+      operationId: proxyGetOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/orders/{orderId}/fill:
+    post:
+      tags: [Proxy]
+      summary: 補成交（代理）
+      operationId: proxyFillOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/orders/{orderId}/cancel:
+    patch:
+      tags: [Proxy]
+      summary: 取消訂單（代理）
+      operationId: proxyCancelOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/orders/{orderId}/events:
+    get:
+      tags: [Proxy]
+      summary: 訂單事件（代理）
+      operationId: proxyOrderEvents
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/positions:
+    get:
+      tags: [Proxy]
+      summary: 持倉列表（代理）
+      operationId: proxyListPositions
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/positions/{symbol}:
+    get:
+      tags: [Proxy]
+      summary: 單一持倉（代理）
+      operationId: proxyGetPosition
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/pnl:
+    get:
+      tags: [Proxy]
+      summary: PnL 摘要（代理）
+      operationId: proxyGetPnL
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/trades:
+    get:
+      tags: [Proxy]
+      summary: 成交列表（代理）
+      operationId: proxyListTrades
+      responses:
+        '200':
+          description: Engine 回應
+
+  /api/v1/trades/{tradeId}:
+    get:
+      tags: [Proxy]
+      summary: 單筆成交（代理）
+      operationId: proxyGetTrade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Engine 回應
+
+components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      description: 冪等鍵（建議必填）
+      schema:
+        type: string
+
+  schemas:
+    GatewayOrderRequest:
+      type: object
+      required: [symbol, side, quantity, price]
+      properties:
+        clientOrderId:
+          type: string
+          description: 可選；未提供時使用 Idempotency-Key 或自動產生 UUID
+        symbol:
+          type: string
+          example: BTCUSDT
+        side:
+          type: string
+          enum: [BUY, SELL]
+        quantity:
+          type: number
+          format: double
+          exclusiveMinimum: 0
+        price:
+          type: number
+          format: double
+          exclusiveMinimum: 0
+
+    OrderAcceptedResponse:
+      type: object
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        clientOrderId:
+          type: string
+        status:
+          type: string
+          example: ACCEPTED
+        message:
+          type: string
+        pollUrl:
+          type: string
+          description: 相對路徑，用於輪詢訂單狀態
+        acceptedAt:
+          type: string
+          format: date-time
+
+    RateLimitError:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          example: RATE_LIMIT_EXCEEDED
+        message:
+          type: string

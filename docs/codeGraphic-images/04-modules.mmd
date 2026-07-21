@@ -1,0 +1,16 @@
+flowchart TB
+  subgraph gw [gateway :8080]
+    WF[RateLimitWebFilter]
+    KP[Kafka Producer]
+    EP[EngineProxyService]
+  end
+  subgraph eng [engine :8081/8082]
+    OC[OrderCommandConsumer]
+    TS[TradingService]
+  end
+  subgraph com [common]
+    DTO[OrderCommandMessage]
+  end
+  WF --> KP --> OC
+  KP -.-> DTO
+  EP --> eng
