@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APIGatewayMQ — 初學者學習說明書</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg:#0f1419; --surface:#1a2332; --surface2:#243044; --border:#2d3a4f;
+      --text:#e6edf3; --muted:#8b9cb3; --accent:#3b82f6; --accent2:#10b981; --warn:#f59e0b;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:"Segoe UI","Microsoft JhengHei",sans-serif;
+      background:var(--bg); color:var(--text); line-height:1.65;
+    }
+    .bar {
+      position:sticky; top:0; z-index:10;
+      display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem;
+      padding:0.75rem 1.25rem; background:var(--surface);
+      border-bottom:1px solid var(--border);
+    }
+    .bar a { color:var(--accent); text-decoration:none; }
+    .bar .src { color:var(--muted); font-size:0.85rem; }
+    .bar .badge {
+      font-size:0.75rem; color:var(--warn); border:1px solid var(--warn);
+      border-radius:4px; padding:0.1rem 0.45rem;
+    }
+    main { max-width:880px; margin:0 auto; padding:1.5rem 1.25rem 3rem; }
+    h1,h2,h3,h4 { line-height:1.3; }
+    h1 { font-size:1.7rem; border-bottom:2px solid var(--accent); padding-bottom:0.4rem; }
+    h2 { font-size:1.3rem; margin-top:1.75rem; border-bottom:1px solid var(--border); padding-bottom:0.3rem; }
+    h3 { font-size:1.1rem; margin-top:1.25rem; color:var(--accent2); }
+    a { color:var(--accent); }
+    code, pre { font-family:Consolas,"Courier New",monospace; }
+    code { background:var(--surface2); padding:0.1rem 0.35rem; border-radius:4px; font-size:0.9em; }
+    pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto; }
+    pre code { background:transparent; padding:0; }
+    table { border-collapse:collapse; width:100%; margin:1rem 0; font-size:0.92rem; }
+    th, td { border:1px solid var(--border); padding:0.45rem 0.65rem; text-align:left; }
+    th { background:var(--surface2); }
+    blockquote {
+      margin:1rem 0; padding:0.5rem 0.9rem; border-left:3px solid var(--warn);
+      background:var(--surface2); color:var(--muted);
+    }
+    .mermaid { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1rem; overflow-x:auto; }
+    hr { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+    footer { max-width:880px; margin:0 auto; padding:0 1.25rem 2rem; color:var(--muted); font-size:0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <a href="codeGraphic.html">← CodeGraphic</a>
+    <span class="badge">companion HTML</span>
+    <span class="src">來源（權威）：初學者學習說明書.md</span>
+  </div>
+  <main>
+<h1>APIGatewayMQ — 初學者學習說明書</h1>
+<blockquote>
+<p>第一次跑起來、第一次下單成功。<br />
+建議先完成 <a href="../Trading%20System%20MVP">Trading System MVP</a> 的初學者說明，理解風控與狀態機後再學本專案。</p>
+</blockquote>
+<p><strong>圖解入口（建議先開）：</strong> <a href="codeGraphic.html"><code>docs/codeGraphic.html</code></a>（5 分鐘上手 → 非同步／限流／模組）<br />
+<strong>互動長文：</strong> <a href="%E5%B0%88%E6%A1%88%E5%BC%95%E5%B0%8E%E6%95%99%E5%AD%B8.html"><code>docs/專案引導教學.html</code></a></p>
+<hr />
+<h2>0. 30 秒理解本專案</h2>
+<pre><code class="language-text">限流入口 → 202 快速回應 → Kafka 削峰 → Engine 風控成交 → 輪詢查結果
+</code></pre>
+<p>與 MVP 的最大差異：<strong>下單走 Gateway 回 202（非同步）</strong>，不再等 Engine 跑完才回應。</p>
+<p><strong>學習建議：</strong> 先用 §2 IntelliJ + H2 跑通 Engine REST，再 §3 Docker 全棧體驗 202／Kafka。</p>
+<hr />
+<h2>1. 環境需求</h2>
+<table>
+<thead>
+<tr>
+  <th>項目</th>
+  <th>版本</th>
+  <th>何時需要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>JDK 21</td>
+  <td><code>java -version</code></td>
+  <td>一定要</td>
+</tr>
+<tr>
+  <td>IntelliJ / Gradle</td>
+  <td>本機啟動</td>
+  <td>§2 local</td>
+</tr>
+<tr>
+  <td>Docker Desktop</td>
+  <td><code>docker info</code></td>
+  <td>§3 全棧才需要</td>
+</tr>
+<tr>
+  <td>PowerShell 5.1+</td>
+  <td>內建</td>
+  <td>腳本</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-powershell">$env:JAVA_HOME = &quot;C:\Program Files\Java\jdk-21&quot;
+$env:PATH = &quot;$env:JAVA_HOME\bin;$env:PATH&quot;
+java -version
+</code></pre>
+<p>或：<code>. .\scripts\env.ps1</code></p>
+<hr />
+<h2>2. 最快上手：IntelliJ + H2（不用 Docker）</h2>
+<p>Engine 預設 profile = <strong><code>local</code></strong>：</p>
+<ul>
+<li>DB = <strong>H2 記憶體</strong>（不必 PostgreSQL）</li>
+<li><strong>Kafka Listener 關閉</strong>（不必本機 Kafka）</li>
+<li>用 <strong>同步 REST</strong> 學下單／風控／持倉</li>
+<li>啟動成功後 Console 會印 <code>StartupInfoLogger</code> 連結框</li>
+</ul>
+<h3>步驟</h3>
+<ol>
+<li>開啟 <code>engine</code> 模組，執行 <code>com.trading.engine.TradingEngineApplication</code><br />
+（Active profiles <strong>留空</strong>即可；不要設 <code>docker</code>）</li>
+<li>等 Console 出現框線「已啟動 — 使用連結」</li>
+<li>瀏覽器開：http://localhost:8081/swagger-ui.html</li>
+<li>呼叫 <code>POST /api/v1/orders</code>，再 <code>GET /api/v1/positions</code>、<code>GET /api/v1/pnl</code></li>
+</ol>
+<p>Gradle 等效：</p>
+<pre><code class="language-powershell">cd &quot;D:\ClaudeCode\APIGatewayMQ&quot;
+.\gradlew.bat :engine:bootRun
+</code></pre>
+<h3>常見錯誤（你剛剛踩到的）</h3>
+<table>
+<thead>
+<tr>
+  <th>現象</th>
+  <th>原因</th>
+  <th>處理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>PSQLException</code>／嘗試連線已失敗</td>
+  <td>連 PostgreSQL <code>:5433</code> 但 Docker 沒開</td>
+  <td>確認 Active profiles 為空／<code>local</code>；不要設 <code>docker</code></td>
+</tr>
+<tr>
+  <td>埠 8081 被占用</td>
+  <td>舊 Engine 還在跑</td>
+  <td>停掉舊行程後重啟</td>
+</tr>
+<tr>
+  <td>想學 202／Kafka</td>
+  <td>local 故意關掉 Consumer</td>
+  <td>改走 §3 Docker 全棧</td>
+</tr>
+</tbody>
+</table>
+<p>H2 Console：http://localhost:8081/h2-console（JDBC URL 見啟動框；帳號 <code>sa</code>、密碼空白）</p>
+<blockquote>
+<p><strong>local 學到什麼／學不到什麼</strong><br />
+學到：Engine 風控、訂單狀態、Swagger、持倉 PnL。<br />
+學不到：Gateway 202、Kafka 削峰、Redis 限流、多副本——那些在 §3。</p>
+</blockquote>
+<hr />
+<h2>3. 一鍵啟動（Docker 全棧）</h2>
+<pre><code class="language-powershell">cd &quot;D:\ClaudeCode\APIGatewayMQ&quot;
+.\scripts\start.ps1
+</code></pre>
+<p>腳本會執行 <code>gradlew bootJar</code> 後 <code>docker compose up -d --build</code>，等待 postgres、kafka 等服務 healthy。<br />
+容器內 Engine 使用 profile <strong><code>docker</code></strong>（PostgreSQL + Kafka Consumer）。</p>
+<h3>服務一覽</h3>
+<table>
+<thead>
+<tr>
+  <th>服務</th>
+  <th>URL</th>
+  <th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Gateway API</td>
+  <td>http://localhost:8080</td>
+  <td><strong>對外入口</strong>（下單、查詢）</td>
+</tr>
+<tr>
+  <td>Engine-1</td>
+  <td>http://localhost:8081</td>
+  <td>交易引擎副本 1</td>
+</tr>
+<tr>
+  <td>Engine-2</td>
+  <td>http://localhost:8082</td>
+  <td>交易引擎副本 2</td>
+</tr>
+<tr>
+  <td>Prometheus</td>
+  <td>http://localhost:9090</td>
+  <td>指標收集</td>
+</tr>
+<tr>
+  <td>Grafana</td>
+  <td>http://localhost:3000</td>
+  <td>儀表板（admin/admin）</td>
+</tr>
+<tr>
+  <td>Swagger (Gateway)</td>
+  <td>http://localhost:8080/swagger-ui.html</td>
+  <td>API 文件</td>
+</tr>
+<tr>
+  <td>Swagger (Engine)</td>
+  <td>http://localhost:8081/swagger-ui.html</td>
+  <td>Engine API 文件</td>
+</tr>
+</tbody>
+</table>
+<h3>驗證全棧是否正常</h3>
+<pre><code class="language-powershell">.\scripts\verify-docker.ps1
+</code></pre>
+<p>等同 <code>start.ps1</code> + <code>smoke-test.ps1</code>（自動下單並輪詢）。</p>
+<hr />
+<h2>4. 第一次下單（經 Gateway，需 §3）</h2>
+<h3>Step 1：非同步下單（經 Gateway）</h3>
+<pre><code class="language-http">POST http://localhost:8080/api/v1/orders
+Content-Type: application/json
+Idempotency-Key: my-first-order
+
+{
+  &quot;symbol&quot;: &quot;BTCUSDT&quot;,
+  &quot;side&quot;: &quot;BUY&quot;,
+  &quot;quantity&quot;: 0.5,
+  &quot;price&quot;: 65000
+}
+</code></pre>
+<p>預期回應：<strong>202 Accepted</strong></p>
+<pre><code class="language-json">{
+  &quot;commandId&quot;: &quot;550e8400-...&quot;,
+  &quot;status&quot;: &quot;ACCEPTED&quot;,
+  &quot;clientOrderId&quot;: &quot;my-first-order&quot;,
+  &quot;message&quot;: &quot;Order queued for processing&quot;,
+  &quot;pollUrl&quot;: &quot;/api/v1/orders?clientOrderId=my-first-order&quot;,
+  &quot;acceptedAt&quot;: &quot;2026-07-06T13:00:00Z&quot;
+}
+</code></pre>
+<blockquote>
+<p><strong>重點：</strong> 202 只代表「已排進 Kafka」，不代表訂單已成交。必須用 <code>pollUrl</code> 輪詢。</p>
+</blockquote>
+<h3>Step 2：輪詢結果</h3>
+<pre><code class="language-http">GET http://localhost:8080/api/v1/orders?clientOrderId=my-first-order
+</code></pre>
+<p>等待 1～3 秒後重試，直到看到 <code>status: &quot;FILLED&quot;</code> 或 <code>&quot;REJECTED&quot;</code>。</p>
+<pre><code class="language-json">{
+  &quot;clientOrderId&quot;: &quot;my-first-order&quot;,
+  &quot;symbol&quot;: &quot;BTCUSDT&quot;,
+  &quot;status&quot;: &quot;FILLED&quot;,
+  &quot;quantity&quot;: 0.5,
+  &quot;filledQuantity&quot;: 0.5
+}
+</code></pre>
+<h3>Step 3：查持倉與損益</h3>
+<pre><code class="language-http">GET http://localhost:8080/api/v1/positions
+GET http://localhost:8080/api/v1/pnl
+</code></pre>
+<h3>PowerShell 一鍵測試（Invoke-RestMethod）</h3>
+<pre><code class="language-powershell">$headers = @{ &quot;Idempotency-Key&quot; = &quot;ps-demo-001&quot; }
+$body = &#x27;{&quot;symbol&quot;:&quot;BTCUSDT&quot;,&quot;side&quot;:&quot;BUY&quot;,&quot;quantity&quot;:0.5,&quot;price&quot;:65000}&#x27;
+Invoke-RestMethod -Method POST -Uri &quot;http://localhost:8080/api/v1/orders&quot; `
+  -Headers $headers -ContentType &quot;application/json&quot; -Body $body
+
+Start-Sleep -Seconds 2
+Invoke-RestMethod -Uri &quot;http://localhost:8080/api/v1/orders?clientOrderId=ps-demo-001&quot;
+</code></pre>
+<hr />
+<h2>5. 常見問題</h2>
+<table>
+<thead>
+<tr>
+  <th>症狀</th>
+  <th>可能原因</th>
+  <th>處理方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>IntelliJ Engine 連不上 DB</td>
+  <td>誤用 docker／PostgreSQL</td>
+  <td>改用 §2 local/H2</td>
+</tr>
+<tr>
+  <td><code>docker info</code> 失敗</td>
+  <td>Docker Desktop 未啟動</td>
+  <td>開啟 Docker Desktop 後重試</td>
+</tr>
+<tr>
+  <td>202 後輪詢一直 404</td>
+  <td>Engine 尚未消費完</td>
+  <td>等 2～5 秒再輪詢</td>
+</tr>
+<tr>
+  <td>429 Too Many Requests</td>
+  <td>超過限流（預設 100 req/s）</td>
+  <td>等 1 秒後重試；見 <code>Retry-After</code> Header</td>
+</tr>
+<tr>
+  <td>409 Conflict</td>
+  <td>同一 Idempotency-Key 重複下單</td>
+  <td>預期行為（冪等保護）</td>
+</tr>
+<tr>
+  <td>422 Unprocessable</td>
+  <td>風控拒絕</td>
+  <td>檢查 <code>errorCode</code>、<code>ruleCode</code></td>
+</tr>
+<tr>
+  <td>連不上 8080</td>
+  <td>Gateway 容器未啟動</td>
+  <td><code>docker compose ps</code> 檢查狀態</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>6. 跑測試（不需 Docker）</h2>
+<pre><code class="language-powershell">cd &quot;D:\ClaudeCode\APIGatewayMQ&quot;
+. .\scripts\env.ps1
+.\gradlew.bat check
+</code></pre>
+<p>測試使用 <strong>H2 + EmbeddedKafka</strong>，不需 Docker。等同 CI 執行的驗證。</p>
+<p>只跑特定模組：</p>
+<pre><code class="language-powershell">.\gradlew.bat :gateway:test
+.\gradlew.bat :engine:integrationTest
+</code></pre>
+<hr />
+<h2>7. 壓力測試（可選）</h2>
+<p>驗證限流與削峰效果：</p>
+<pre><code class="language-powershell">.\scripts\load-test.ps1 -Requests 200 -Concurrency 20
+</code></pre>
+<p>觀察 Prometheus <code>http://localhost:9090</code> 中的 Gateway metrics。</p>
+<hr />
+<h2>8. 停止服務</h2>
+<pre><code class="language-powershell">docker compose down
+</code></pre>
+<p>清除資料卷（重置 DB）：</p>
+<pre><code class="language-powershell">docker compose down -v
+</code></pre>
+<hr />
+<h2>9. 本機開發模式（進階：infra Docker + Java 本機）</h2>
+<p>只啟動基礎設施，Java 本機跑（<strong>要用 PostgreSQL／Kafka</strong>）：</p>
+<pre><code class="language-powershell">docker compose up -d postgres redis zookeeper kafka
+
+# Active profiles = docker，或：
+.\gradlew.bat :engine:bootRun --args=&quot;--spring.profiles.active=docker --server.port=8081&quot;
+.\gradlew.bat :gateway:bootRun
+</code></pre>
+<p>純學習 Engine、不想開 Docker → 請用 §2（預設 <code>local</code>／H2）。</p>
+<hr />
+<h2>10. 學習路線</h2>
+<table>
+<thead>
+<tr>
+  <th>順序</th>
+  <th>做什麼</th>
+  <th>讀什麼</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>IntelliJ + H2 跑通 Engine</td>
+  <td>本文件 §2、<code>codeGraphic.html</code></td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Docker 全棧 + 第一次 202 下單</td>
+  <td>本文件 §3～§4</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>看互動架構圖</td>
+  <td><code>docs/專案引導教學.html</code></td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>理解非同步流程</td>
+  <td><code>docs/功能流程說明.md</code></td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>查 API 細節</td>
+  <td><code>API規格書.md</code></td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>深入架構</td>
+  <td><code>docs/架構學習導引.md</code></td>
+</tr>
+<tr>
+  <td>7</td>
+  <td>面試準備</td>
+  <td><code>APIGatewayMQ 規格書.md</code>、<code>卡牌步驟.md</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>最後更新：2026-07-27</em></p>
+
+  </main>
+  <footer>由 eos-minimal/hooks/md-to-companion-html 產生 · 請改 .md 後重跑腳本 · 勿當權威契約</footer>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: "dark", securityLevel: "loose" });
+  </script>
+</body>
+</html>

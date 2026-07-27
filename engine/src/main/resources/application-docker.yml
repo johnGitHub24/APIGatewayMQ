@@ -1,0 +1,32 @@
+# -----------------------------------------
+# docker：全棧／與 docker-compose 搭配（PostgreSQL + Kafka Consumer）
+# -----------------------------------------
+# 容器內請用環境變數覆寫（見 docker-compose.yml）：
+#   SPRING_DATASOURCE_URL、KAFKA_BOOTSTRAP_SERVERS、SERVER_PORT
+# 本機「只起 infra、Java 本機跑」：
+#   docker compose up -d postgres redis zookeeper kafka
+#   再以 Active profiles = docker 啟動，並設：
+#   SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/trading
+# -----------------------------------------
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/trading}
+    username: ${SPRING_DATASOURCE_USERNAME:trading}
+    password: ${SPRING_DATASOURCE_PASSWORD:trading}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    listener:
+      auto-startup: true
+
+startup:
+  info:
+    h2: false
+    project-name: APIGatewayMQ Engine (docker/PostgreSQL)

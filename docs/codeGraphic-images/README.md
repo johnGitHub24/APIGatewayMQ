@@ -6,6 +6,7 @@ Script: EngineeringOS/eos-minimal/hooks/export-codeGraphic-images.ps1
 
 | File | Tab |
 |------|-----|
+| `00-start.svg` / `.png` | 5 分鐘上手 |
 | `01-async.svg` / `.png` | 非同步下單 |
 | `02-ratelimit.svg` / `.png` | 限流 |
 | `03-engine.svg` / `.png` | Engine |

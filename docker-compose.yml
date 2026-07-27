@@ -106,6 +106,8 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      # 覆寫預設 local（H2）；全棧用 PostgreSQL + Kafka Consumer
+      SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: 8081
       # 容器內連資料庫：用服務名 postgres + 容器埠 5432
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/trading
@@ -132,6 +134,7 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/trading
       SPRING_DATASOURCE_USERNAME: trading

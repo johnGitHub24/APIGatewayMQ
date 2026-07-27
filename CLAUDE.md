@@ -7,7 +7,8 @@
 ## 與公版差異
 
 - 多模組：`common` + `gateway`（WebFlux :8080）+ `engine`（:8081／多副本）
-- 基礎設施：Kafka、Redis 限流、PostgreSQL（Docker）／H2（test）
+- 基礎設施：Kafka、Redis 限流、PostgreSQL（Docker／`docker` profile）／H2（`local` 預設、test）
+- IntelliJ 本機：預設 `local`（H2，無需 Docker）；全棧見 `docker-compose` + `SPRING_PROFILES_ACTIVE=docker`
 - 驗證入口：`.\scripts\check.ps1`（`gradlew check`，unit + integration）
 - Docs standard：`knowledge/documentation.md`
 

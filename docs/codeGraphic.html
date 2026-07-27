@@ -24,28 +24,67 @@
     .blurb li { margin-left:1.1rem; margin-bottom:0.25rem; }
     .mermaid { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.25rem; overflow-x:auto; }
     .note { margin-top:1rem; background:var(--surface2); border-left:3px solid var(--warn); padding:0.65rem 0.9rem; font-size:0.85rem; color:var(--muted); }
+    .steps { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1rem 1.25rem; margin-bottom:1rem; }
+    .steps ol { margin-left:1.25rem; color:#c9d4e3; }
+    .steps li { margin-bottom:0.45rem; }
+    .steps code { color:var(--accent2); }
     footer { padding:0 2rem 2rem; color:var(--muted); font-size:0.8rem; }
   </style>
 </head>
 <body>
   <header class="top">
     <h1>APIGatewayMQ — CodeGraphic</h1>
-    <p class="sub">圖為主 · Gateway／Kafka／Engine／限流 · 削峰多副本</p>
+    <p class="sub">圖為主 · 先 local/H2 跑通 Engine → 再學 Gateway／Kafka 削峰 · 文件連結為 companion HTML（可直接雙擊，不必開 server）</p>
     <p class="links">
+      <a href="初學者學習說明書.html">初學者學習說明書</a>
       <a href="專案引導教學.html">專案引導教學（長文）</a>
-      <a href="md-viewer.html?src=../APIGatewayMQ%20%E8%A6%8F%E6%A0%BC%E6%9B%B8.md">規格書（權威）</a>
-      <a href="md-viewer.html?src=architecture.md">architecture.md</a>
+      <a href="../APIGatewayMQ 規格書.html">規格書（權威）</a>
+      <a href="architecture.html">architecture</a>
+      <a href="啟動與StartupInfoLogger.html">啟動說明</a>
       <a href="swagger.html">API 文件（Swagger）</a>
     </p>
     <nav class="tabs">
-      <button type="button" class="tab active" data-tab="async">非同步下單</button>
+      <button type="button" class="tab active" data-tab="start">5 分鐘上手</button>
+      <button type="button" class="tab" data-tab="async">非同步下單</button>
       <button type="button" class="tab" data-tab="ratelimit">限流</button>
       <button type="button" class="tab" data-tab="engine">Engine</button>
       <button type="button" class="tab" data-tab="modules">模組</button>
     </nav>
   </header>
   <main>
-    <section id="panel-async" class="panel active">
+    <section id="panel-start" class="panel active">
+      <h2>5 分鐘上手 — IntelliJ + H2（不用 Docker）</h2>
+      <ul class="blurb">
+        <li>預設 profile = <code>local</code>：記憶體 H2，不連 PostgreSQL。</li>
+        <li>Kafka Listener <strong>關閉</strong>：先用 Engine 同步 REST 學風控／訂單。</li>
+        <li>啟動成功後 Console 會印連結框（<code>StartupInfoLogger</code>）。</li>
+        <li>學完再說 Docker 全棧（Gateway 202 + Kafka 削峰）。</li>
+      </ul>
+      <div class="steps">
+        <ol>
+          <li>IntelliJ 開啟模組 <code>engine</code>，執行 <code>TradingEngineApplication</code>（不必設 Active profiles）。</li>
+          <li>看到框線輸出後，開 <code>http://localhost:8081/swagger-ui.html</code>。</li>
+          <li><code>POST /api/v1/orders</code> 下一筆單 → <code>GET /api/v1/positions</code> 看持倉。</li>
+          <li>可選：H2 Console <code>http://localhost:8081/h2-console</code>（JDBC 見 Console 框）。</li>
+          <li>下一步：讀「非同步下單」分頁，再 <code>docker compose</code> / <code>scripts/start.ps1</code>。</li>
+        </ol>
+      </div>
+      <div class="mermaid">
+flowchart LR
+  subgraph local [local 模式]
+    IDEA[IntelliJ Engine] --> H2[(H2 mem)]
+    IDEA --> REST[同步 REST :8081]
+  end
+  subgraph full [Docker 全棧稍後]
+    GW[Gateway :8080] --> K[Kafka]
+    K --> E[Engine]
+    E --> PG[(PostgreSQL)]
+  end
+  local -.->|學會後再升級| full
+      </div>
+      <p class="note">若出現「嘗試連線已失敗／PostgreSQL」：代表跑到 <code>docker</code> profile 或舊設定。清掉 Active profiles，或確認未設 <code>SPRING_PROFILES_ACTIVE=docker</code>。</p>
+    </section>
+    <section id="panel-async" class="panel" hidden>
       <h2>非同步下單 — Gateway → Kafka</h2>
       <ul class="blurb">
         <li>Gateway <code>POST /api/v1/orders</code> 回 202 + pollUrl。</li>
@@ -65,7 +104,7 @@ sequenceDiagram
   K->>E: OrderCommandConsumer
   E->>E: TradingService.placeOrder
       </div>
-      <p class="note">查詢／取消走 Gateway 代理 Engine REST（Round-Robin）。</p>
+      <p class="note">這條路需要 Docker infra。local/H2 先用 Engine 直連 REST 對照理解。</p>
     </section>
     <section id="panel-ratelimit" class="panel" hidden>
       <h2>限流 — Redis 固定窗口</h2>
@@ -90,19 +129,19 @@ flowchart LR
       <ul class="blurb">
         <li><code>engine</code> 模組 :8081／:8082 多副本。</li>
         <li><code>TradingService</code> + <code>RiskEngine</code> 同 MVP 語意。</li>
-        <li>JPA → PostgreSQL（Docker）／H2（test）。</li>
-        <li>同步 REST 供除錯與 Gateway 代理。</li>
+        <li>DB：<code>local</code>=H2；<code>docker</code>=PostgreSQL。</li>
+        <li>同步 REST 供學習／除錯；Kafka Consumer 在 docker 模式開啟。</li>
       </ul>
       <div class="mermaid">
 flowchart TB
   K[Kafka order.commands] --> C[OrderCommandConsumer]
   C --> TS[TradingService]
   TS --> RE[RiskEngine]
-  TS --> PG[(PostgreSQL)]
-  G[Gateway proxy] --> API[Engine REST]
+  TS --> DB[(H2 或 PostgreSQL)]
+  G[Gateway proxy / Swagger] --> API[Engine REST]
   API --> TS
       </div>
-      <p class="note">同 symbol partition key 保序。</p>
+      <p class="note">同 symbol partition key 保序（僅 Kafka 路徑）。</p>
     </section>
     <section id="panel-modules" class="panel" hidden>
       <h2>模組 — Gradle 三件套</h2>
@@ -136,10 +175,16 @@ flowchart TB
   <footer>CodeGraphic · 非權威 · 衝突以規格書為準 · Mermaid CDN</footer>
   <script>
     mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "loose" });
-    const panels = { async: document.getElementById("panel-async"), ratelimit: document.getElementById("panel-ratelimit"), engine: document.getElementById("panel-engine"), modules: document.getElementById("panel-modules") };
-    const rendered = new Set(["async"]);
+    const panels = {
+      start: document.getElementById("panel-start"),
+      async: document.getElementById("panel-async"),
+      ratelimit: document.getElementById("panel-ratelimit"),
+      engine: document.getElementById("panel-engine"),
+      modules: document.getElementById("panel-modules")
+    };
+    const rendered = new Set(["start"]);
     async function renderPanel(id) { if (rendered.has(id)) return; await mermaid.run({ nodes: panels[id].querySelectorAll(".mermaid") }); rendered.add(id); }
-    mermaid.run({ nodes: panels.async.querySelectorAll(".mermaid") });
+    mermaid.run({ nodes: panels.start.querySelectorAll(".mermaid") });
     document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", async () => {
       const id = tab.dataset.tab;
       document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === tab));

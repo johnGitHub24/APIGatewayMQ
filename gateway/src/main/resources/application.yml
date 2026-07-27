@@ -30,6 +30,19 @@ management:
     tags:
       application: trading-gateway
 
+# IntelliJ／bootRun 就緒後 Console 印常用 URL（見 StartupInfoLogger）
+startup:
+  info:
+    enabled: true
+    project-name: APIGatewayMQ Gateway
+    frontend: none
+    auth: false
+    h2: false
+    api-docs: true
+    extra-paths:
+      - /api/v1/orders
+      - /actuator/prometheus
+
 logging:
   level:
     com.trading.gateway: INFO

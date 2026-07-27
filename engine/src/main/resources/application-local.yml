@@ -1,0 +1,47 @@
+# -----------------------------------------
+# local：IntelliJ／本機先跑通（無需 Docker PostgreSQL／Kafka）
+# -----------------------------------------
+# - H2 記憶體庫（MODE=PostgreSQL 降低 SQL 差異）
+# - 關閉 Kafka Listener：同步 REST 下單仍可用；非同步削峰請改 Docker 全棧
+# - H2 Console：http://localhost:8081/h2-console
+# -----------------------------------------
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:tradingengine;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        # 讓 Hibernate 自動選 H2Dialect；勿硬編 PostgreSQLDialect
+        dialect: org.hibernate.dialect.H2Dialect
+  kafka:
+    listener:
+      # 沒有本機 Kafka 時不要一直重連；本模式用 Engine REST 直接下單學習
+      auto-startup: false
+
+trading:
+  job:
+    # local 先關排程，避免初學者 Console 被 Job 噪音淹沒；要測 Job 可改 true
+    stale-order:
+      enabled: false
+    pnl-snapshot:
+      enabled: false
+    retry:
+      enabled: false
+    cleanup:
+      enabled: false
+
+startup:
+  info:
+    h2: true
+    project-name: APIGatewayMQ Engine (local/H2)
