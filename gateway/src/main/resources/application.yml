@@ -39,6 +39,11 @@ startup:
     auth: false
     h2: false
     api-docs: true
+    # Console「全棧服務連結」預設埠（對齊 docker-compose／規格書）
+    gateway-url: http://localhost:8080
+    engine-url: http://localhost:8081
+    prometheus-url: http://localhost:9090
+    grafana-url: http://localhost:3000
     extra-paths:
       - /api/v1/orders
       - /actuator/prometheus

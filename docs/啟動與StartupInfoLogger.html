@@ -88,7 +88,47 @@
 </table>
 <p>IntelliJ 執行 <code>TradingEngineApplication</code> 時 <strong>Active profiles 留空</strong> → 自動 <code>local</code>。</p>
 <h2>啟動後會看到什麼</h2>
-<p>框線內含：health、Swagger、（local）H2 Console、主要 API 路徑、學習文件提示。</p>
+<p>框線內含 <strong>【全棧服務連結】</strong>（對齊規格書）：</p>
+<table>
+<thead>
+<tr>
+  <th>項目</th>
+  <th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Gateway Health</td>
+  <td>http://localhost:8080/actuator/health</td>
+</tr>
+<tr>
+  <td>Gateway Metrics</td>
+  <td>http://localhost:8080/actuator/prometheus</td>
+</tr>
+<tr>
+  <td>Engine Health</td>
+  <td>http://localhost:8081/actuator/health</td>
+</tr>
+<tr>
+  <td>Prometheus</td>
+  <td>http://localhost:9090</td>
+</tr>
+<tr>
+  <td>Grafana</td>
+  <td>http://localhost:3000</td>
+</tr>
+<tr>
+  <td>Swagger (Gateway)</td>
+  <td>http://localhost:8080/swagger-ui.html</td>
+</tr>
+<tr>
+  <td>Swagger (Engine)</td>
+  <td>http://localhost:8081/swagger-ui/index.html</td>
+</tr>
+</tbody>
+</table>
+<p>另含：profiles、本服務 info／OpenAPI、（local）H2 Console、學習文件提示。</p>
+<p>覆寫位址：<code>startup.info.gateway-url</code>／<code>engine-url</code>／<code>prometheus-url</code>／<code>grafana-url</code></p>
 <p>實作：</p>
 <ul>
 <li><code>engine/.../config/StartupInfoLogger.java</code></li>

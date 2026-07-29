@@ -17,6 +17,10 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID:trading-engine}
+    listener:
+      # 預設關閉；local 亦為 false。docker profile 會改 true（見 application-docker.yml）
+      # 注意：自訂 ListenerContainerFactory 還需在 Java 裡 setAutoStartup（KafkaConsumerConfig）
+      auto-startup: false
 
 trading:
   risk:
@@ -78,6 +82,11 @@ startup:
     auth: false
     h2: false
     api-docs: true
+    # Console「全棧服務連結」預設埠（對齊 docker-compose／規格書）
+    gateway-url: http://localhost:8080
+    engine-url: http://localhost:8081
+    prometheus-url: http://localhost:9090
+    grafana-url: http://localhost:3000
     extra-paths:
       - /api/v1/orders
       - /api/v1/positions
