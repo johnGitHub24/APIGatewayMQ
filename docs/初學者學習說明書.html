@@ -144,6 +144,11 @@ java -version
   <td>確認 Active profiles 為空／<code>local</code>；不要設 <code>docker</code></td>
 </tr>
 <tr>
+  <td><code>Bootstrap broker localhost:9092 disconnected</code></td>
+  <td>自訂 Kafka Factory 以前沒套 <code>auto-startup:false</code>，Listener 仍連 Kafka</td>
+  <td>已修正；重啟 Engine（Active profiles 留空）。要 Kafka 請走 §3 Docker</td>
+</tr>
+<tr>
   <td>埠 8081 被占用</td>
   <td>舊 Engine 還在跑</td>
   <td>停掉舊行程後重啟</td>

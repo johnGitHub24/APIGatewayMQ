@@ -43,7 +43,9 @@ public class OrderCommandConsumer {
     @KafkaListener(
             topics = Topics.ORDER_COMMANDS,
             groupId = "${spring.kafka.consumer.group-id:trading-engine}",
-            containerFactory = "orderCommandKafkaListenerContainerFactory")
+            containerFactory = "orderCommandKafkaListenerContainerFactory",
+            // 與 application-local.yml 的 auto-startup:false 對齊（雙重保險）
+            autoStartup = "${spring.kafka.listener.auto-startup:true}")
     public void consume(@Payload OrderCommandMessage command,
                         @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
                         @Header(KafkaHeaders.OFFSET) long offset) {
