@@ -1,10 +1,13 @@
 package com.trading.application;
 
+import com.trading.common.OrderCommandMessage;
 import com.trading.config.JobProperties;
 import com.trading.domain.FailedCommandStatus;
 import com.trading.domain.OrderSide;
 import com.trading.infrastructure.entity.FailedCommandEntity;
 import com.trading.infrastructure.repository.FailedCommandRepository;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +55,49 @@ class FailedCommandServiceTest {
         e.setStatus(FailedCommandStatus.PENDING);
         e.setNextRetryAt(OffsetDateTime.now().minusSeconds(1));
         return e;
+    }
+
+    @Test
+    void recordFailure_persistsPendingCommand() {
+        OrderCommandMessage command = OrderCommandMessage.builder()
+                .commandId("cmd-rec")
+                .clientOrderId("coid-rec")
+                .symbol("BTCUSDT")
+                .side("BUY")
+                .quantity(new BigDecimal("0.5"))
+                .price(new BigDecimal("65000"))
+                .build();
+        when(failedCommandRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        FailedCommandEntity saved = service.recordFailure(command, "kafka timeout");
+
+        assertThat(saved.getCommandId()).isEqualTo("cmd-rec");
+        assertThat(saved.getStatus()).isEqualTo(FailedCommandStatus.PENDING);
+        assertThat(saved.getAttempts()).isZero();
+        assertThat(saved.getFailureReason()).isEqualTo("kafka timeout");
+        verify(failedCommandRepository).save(saved);
+    }
+
+    @Test
+    void findByStatus_null_returnsRecentPage() {
+        FailedCommandEntity entity = pending(0);
+        when(failedCommandRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(entity)));
+
+        List<FailedCommandEntity> found = service.findByStatus(null);
+
+        assertThat(found).containsExactly(entity);
+    }
+
+    @Test
+    void findByStatus_pending_filtersRepository() {
+        FailedCommandEntity entity = pending(0);
+        when(failedCommandRepository.findByStatus(eq(FailedCommandStatus.PENDING), any(Pageable.class)))
+                .thenReturn(List.of(entity));
+
+        List<FailedCommandEntity> found = service.findByStatus(FailedCommandStatus.PENDING);
+
+        assertThat(found).containsExactly(entity);
     }
 
     @Test

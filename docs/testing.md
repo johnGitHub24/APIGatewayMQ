@@ -1,10 +1,113 @@
-# Testing and Verification — APIGatewayMQ
+# 測試與 CI — APIGatewayMQ
 
-> 衝突以 [APIGatewayMQ 規格書.md](../APIGatewayMQ%20規格書.md) 為準。  
-> Case ID／腳本詳見 [測試與CI.md](測試與CI.md)。  
-> 規範：EngineeringOS `knowledge/testing.md`
+> 開發順序：**資料表 → 測試案例 → 功能實作**（對齊 houseHub / MVP 方法論）  
+> Case ID 與 [`專案引導教學.html`](專案引導教學.html) §12 一致。
 
-## Check command
+---
+
+## 測試分層
+
+| 層級 | Tag | Gradle 任務 | 需 DB/Kafka | 模組 |
+|------|-----|-------------|-------------|------|
+| 單元測試 | `@Tag("unit")` 或無 tag | `gradlew :engine:test` / `:gateway:test` / `:common:test` | 否 | common / engine / gateway |
+| 整合測試 | `@Tag("integration")` | `gradlew :engine:integrationTest` / `:gateway:integrationTest` | H2 + EmbeddedKafka | engine / gateway |
+| OpenAPI 匯出 | `@Tag("openapi")` | `gradlew :engine:exportOpenApi` / `:gateway:exportOpenApi` | 否 | engine / gateway |
+| 全專案 | — | `gradlew check` | 同上 | 全部 |
+
+> Windows 需 JDK 21。可執行 `. .\scripts\env.ps1` 自動設定 `JAVA_HOME`。Gradle test 已設定 `-Djdk.attach.allowAttachSelf=true`（Mockito 相容）。
+
+### 分層示意
+
+```text
+gradlew check
+├── :common:test
+├── :gateway:test          ← 單元（Mock Redis/Kafka）
+├── :gateway:integrationTest ← EmbeddedKafka
+├── :engine:test           ← 單元（MockMvc、RiskEngine）
+└── :engine:integrationTest  ← H2 + EmbeddedKafka + 全鏈路
+```
+
+---
+
+## 資料表（先建立、先驗證）
+
+腳本：`docs/sql/schema.sql`  
+整合測試：`DatabaseSchemaIntegrationTest.DB_001_allFourTablesExist`
+
+| 表 | 用途 |
+|----|------|
+| orders | 訂單主檔（`client_order_id` UNIQUE） |
+| trades | 成交紀錄 |
+| positions | 持倉 |
+| order_events | 審計日誌 |
+
+---
+
+## Case ID 對照（主表）
+
+| Case ID | 類型 | 模組 | 測試重點 | 測試類別 |
+|---------|------|------|----------|----------|
+| COMMON-001 | 單元 | common | JSON 序列化 round-trip | OrderCommandMessageSerializationTest |
+| COMMON-002 | 單元 | common | 必填欄位驗證 | OrderCommandMessageSerializationTest |
+| DB-001 | 整合 | engine | 四張表存在 | DatabaseSchemaIntegrationTest |
+| GW-001 | 單元 | gateway | Producer 正確發 Kafka | OrderCommandProducerTest |
+| GW-002 | 單元 | gateway | Controller 回 202 結構 | OrderSubmitControllerTest |
+| GW-003 | 整合 | gateway | POST 後 topic 有訊息 | GatewayKafkaIntegrationTest |
+| GW-004 | 單元 | gateway | 限流通過 | RateLimitWebFilterTest |
+| GW-005 | 單元 | gateway | 超限回 429 | RateLimitWebFilterTest |
+| GW-006 | 單元 | gateway | 請求參數驗證 | OrderSubmitControllerValidationTest |
+| ENGINE-MQ-001 | 整合 | engine | Consumer 消費後訂單成交 | OrderCommandConsumerIntegrationTest |
+| ENGINE-MQ-002 | 整合 | engine | 重複消費冪等 | OrderCommandConsumerIntegrationTest |
+| ORDER-001~006 | 整合 | engine | 下單業務（自 MVP） | PlaceOrderIntegrationTest |
+| ORDER-007 | 整合 | engine | 交易回滾 | OrderRollbackIntegrationTest |
+| SCN-001~005 | 整合 | engine | 市場場景 CHOP/HIGHVOL | ScenarioIntegrationTest |
+| LOG-001~003 | 整合 | engine | 審計日誌 | LogIntegrationTest |
+
+### 補充 Case ID（Engine 單元／整合）
+
+| Case ID | 類型 | 模組 | 測試類別 | 說明 |
+|---------|------|------|----------|------|
+| ORDER-001/003 | 單元 | engine | OrderControllerTest | WebMvc 層下單／驗證 |
+| ORDER-003 | 單元 | engine | CreateOrderRequestValidationTest | DTO 驗證 |
+| R001~R010 | 單元 | engine | RiskEngineTest | 風控規則鏈 |
+| — | 單元 | engine | ExecutionEngineTest | 全量／部分成交 |
+| — | 單元 | engine | PnLCalculatorTest | 未實現損益計算 |
+| — | 單元 | engine | PositionControllerTest | 持倉 API |
+| — | 單元 | engine | PnLControllerTest | PnL API |
+| R007/R010 | 整合 | engine | AdvancedRiskIntegrationTest | CHOPPY / HIGHVOL |
+| — | 整合 | engine | TradeQueryIntegrationTest | 下單後查 trades |
+| partialFill/cancel | 整合 | engine | PlaceOrderIntegrationTest | 部分成交／取消 |
+
+### Case ID → 功能流程對照
+
+| 驗證什麼 | Case ID | 對應文件 |
+|----------|---------|----------|
+| 非同步下單 202 | GW-002, GW-003 | 功能流程說明 §1 |
+| Kafka 訊息契約 | COMMON-001 | 規格書 §5 |
+| 限流 429 | GW-004/005 | 功能流程說明 §6 |
+| Consumer 全鏈路 | ENGINE-MQ-001 | 功能流程說明 §2 |
+| 冪等 409 | ENGINE-MQ-002, ORDER-* | API規格書 §5 |
+| 風控 422 | SCN-*, R* | 架構文件 §風控 |
+
+---
+
+## Fixture 目錄
+
+```text
+docs/test-data/
+├── placeOrder/              ← 與 MVP 共用（Engine 直接下單）
+│   ├── ORDER-001-SUCCESS.json
+│   └── ...
+├── gateway/                 ← Gateway 專用
+│   ├── GW-ORDER-001-SUCCESS.json
+│   └── GW-MQ-001-COMMAND.json
+```
+
+使用方式：測試類別透過 `OrderTestFixtures` / `GatewayTestFixtures` 載入 JSON。
+
+---
+
+## 本機執行
 
 ```powershell
 .\scripts\check.ps1
@@ -12,39 +115,108 @@
 
 等同 `.\gradlew.bat check`（需 JDK 21；可先 `. .\scripts\env.ps1`）。與 CI 同一入口。
 
-## Test layers
+### 模組別執行
 
-| Layer | Location | Tag / Task | 說明 |
-|-------|----------|------------|------|
-| 單元 | `*/src/test` | `@Tag("unit")` 或無 | common 序列化、Gateway Producer／限流、Engine Risk／Controller |
-| 整合 | `*/src/integrationTest` | `@Tag("integration")` | H2 + EmbeddedKafka；Gateway→Kafka、Consumer→成交、ORDER／SCN／LOG |
-| OpenAPI | export 任務 | `@Tag("openapi")` | `:engine:exportOpenApi`／`:gateway:exportOpenApi` |
-| Smoke（可選） | `scripts/smoke-test.ps1` | — | 需 Docker／本機服務運行 |
+```powershell
+.\gradlew.bat :common:test
+.\gradlew.bat :gateway:test
+.\gradlew.bat :gateway:integrationTest
+.\gradlew.bat :engine:test
+.\gradlew.bat :engine:integrationTest
+```
 
-## Minimum case types
+### 匯出 OpenAPI
 
-| Type | Coverage |
-|------|----------|
-| Happy Path | GW-002／GW-003、ENGINE-MQ-001、ORDER-001 等 |
-| Error Path | GW-005（429）、GW-006（驗證）、風控 R001~R010、冪等 ENGINE-MQ-002 |
-| Schema | DB-001（四張核心表） |
+```powershell
+.\gradlew.bat :gateway:exportOpenApi
+.\gradlew.bat :engine:exportOpenApi
+```
 
-## Key classes
+> 自動化測試使用 **H2 + EmbeddedKafka**，不需 Docker。本機啟動：`.\gradlew.bat :gateway:bootRun`／`:engine:bootRun`。
 
-| Test | 對應 |
+---
+
+## Docker（可選，需 Docker Desktop）
+
+基礎設施與多副本可用 compose，**不是**驗證入口。
+
+```powershell
+docker compose up -d
+.\gradlew.bat :gateway:bootRun
+.\gradlew.bat :engine:bootRun
+```
+
+限流／削峰觀察：對 `POST /api/v1/orders` 連續送單，對照 GW-004／GW-005（429）。
+
+---
+
+## CI（GitHub Actions）
+
+檔案：`.github/workflows/ci.yml`
+
+| 項目 | 設定 |
 |------|------|
-| `OrderCommandMessageSerializationTest` | COMMON-001／002 |
-| `OrderSubmitControllerTest`／`RateLimitWebFilterTest` | GW-002／004／005 |
-| `GatewayKafkaIntegrationTest` | GW-003 |
-| `OrderCommandConsumerIntegrationTest` | ENGINE-MQ-001／002 |
-| `DatabaseSchemaIntegrationTest` | DB-001 |
-| `PlaceOrderIntegrationTest`／`ScenarioIntegrationTest` | ORDER／SCN |
+| 觸發 | push/PR → `main`、`master`、`develop` |
+| JDK | 21 (Temurin) |
+| 指令 | `./gradlew check --no-daemon` |
+| Artifact | `**/build/reports/tests/`、`**/build/test-results/` |
 
-## DoD
+### CI 與本機對照
 
-- [ ] Unit tests green（`:common:test`、`:gateway:test`、`:engine:test`）
-- [ ] Integration tests green（`:gateway:integrationTest`、`:engine:integrationTest`）
-- [ ] Check command matches CI（`gradlew check`）
-- [ ] 公開 Gateway／Engine 核心路徑有 Happy + 錯誤路徑
+```text
+本機 gradlew check  ≈  CI job test
+```
 
-詳見 [測試與CI.md](測試與CI.md)。
+### 未來擴充（參考 TradingKubernetes）
+
+完整 CI/CD pipeline 範本（SonarQube、Docker Build、Trivy）見 [`TradingKubernetes/ci/examples/apigatewaymq-ci-cd.yml`](../TradingKubernetes/ci/examples/apigatewaymq-ci-cd.yml)。
+
+---
+
+## DoD 檢查清單
+
+- [ ] `gradlew check` 全綠（unit + integration）
+- [ ] Gateway POST 回 202，Kafka topic 有訊息（GW-003）
+- [ ] Engine Consumer 處理後 DB 有訂單（ENGINE-MQ-001）
+- [ ] 限流超過閾值回 429（GW-005）
+- [ ] 冪等鍵重複不產生第二筆訂單（ENGINE-MQ-002）
+- [ ] （可選）Docker 全棧可啟動（`docker compose up -d`）
+
+---
+
+## 擴充 SOP
+
+```text
+1. docs/sql/schema.sql（若改表）
+2. docs/test-data/ 新增 fixture JSON
+3. 寫失敗測試（unit / integration），標註 Case ID
+4. 實作功能
+5. gradlew check 全綠
+6. 更新本文件 Case ID 表
+7. （可選）更新 專案引導教學.html §12
+```
+
+### 新增 Gateway 功能範例
+
+```text
+1. 在 docs/test-data/gateway/ 加 fixture
+2. 寫 GW-00X 測試（先紅燈）
+3. 實作 Controller / Service
+4. gradlew :gateway:check 全綠
+5. 更新 API規格書.md
+```
+
+---
+
+## 相關文件
+
+| 文件 | 用途 |
+|------|------|
+| [`APIGatewayMQ 規格書.md`](../APIGatewayMQ%20規格書.md) §6 | 權威測試規格 |
+| [`專案引導教學.html`](專案引導教學.html) §12 | 互動 Case ID 表 |
+| [`功能流程說明.md`](功能流程說明.md) | 流程與 Case 對照 |
+| `測試規格書.md` | houseHub 方法論參考 |
+
+---
+
+*最後更新：2026-07-07*

@@ -2,6 +2,7 @@ package com.trading.gateway.service;
 
 import com.trading.common.OrderCommandMessage;
 import com.trading.common.Topics;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,7 @@ class OrderCommandProducerTest {
     private OrderCommandProducer producer;
 
     @Test
+    @DisplayName("GW-001 GW-003 GW-ORDER-001 GW-MQ-001 publish command with symbol partition key")
     void GW_001_publish_sendsToOrderCommandsTopicWithSymbolKey() {
         OrderCommandMessage command = OrderCommandMessage.builder()
                 .commandId("cmd-1")

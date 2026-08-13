@@ -8,6 +8,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.io.PrintStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import java.util.ArrayList;
@@ -39,6 +41,7 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
         boolean auth = env.getProperty("startup.info.auth", Boolean.class, false);
         boolean h2 = env.getProperty("startup.info.h2", Boolean.class, false);
         boolean apiDocs = env.getProperty("startup.info.api-docs", Boolean.class, true);
+        boolean probe = Boolean.TRUE.equals(env.getProperty("startup.info.probe", Boolean.class, true));
         boolean kafkaListener = env.getProperty("spring.kafka.listener.auto-startup", Boolean.class, true);
         String[] profiles = env.getActiveProfiles();
         if (profiles.length == 0) {
@@ -111,6 +114,7 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
      * 【概念】local/H2 只起 Engine，印 Gateway／Prometheus／Grafana 若不標註會誤導為「都能開」。
      */
     private static void printStackLinks(PrintStream out, Environment env, boolean localMode, String thisBase) {
+        boolean probe = Boolean.TRUE.equals(env.getProperty("startup.info.probe", Boolean.class, true));
         String gateway = env.getProperty("startup.info.gateway-url", "http://localhost:8080");
         String engine = env.getProperty("startup.info.engine-url", "http://localhost:8081");
         // 本行程實際埠優先（IntelliJ 改 port 時仍正確）
@@ -122,11 +126,11 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
 
         if (localMode) {
             out.println("║ 【本機已可用 — local/H2】                                                   ║");
-            out.printf("║   Engine Health       %s%n", engine + "/actuator/health");
+            out.printf("║   Engine Health       %s%s%n", engine + "/actuator/health", mark(probe, engine + "/actuator/health"));
             out.printf("║   Swagger (Engine)    %s%n", engine + "/swagger-ui/index.html");
             out.println("╠════════════════════════════════════════════════════════════════════════╣");
-            out.println("║ 【需 Docker 全棧後才可連】  請執行: .\\scripts\\start.ps1                     ║");
-            out.printf("║   Gateway Health      %s%n", gateway + "/actuator/health");
+            out.println("║ 【需 Docker 全棧後才可連】  docker compose up -d 後 :gateway:bootRun         ║");
+            out.printf("║   Gateway Health      %s%s%n", gateway + "/actuator/health", mark(probe, gateway + "/actuator/health"));
             out.printf("║   Gateway Metrics     %s%n", gateway + "/actuator/prometheus");
             out.printf("║   Prometheus          %s%n", prometheus);
             out.printf("║   Grafana             %s%n", grafana);
@@ -134,9 +138,9 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
             out.println("║   （啟動全棧前請先停掉本機 Engine，避免 8081 埠衝突）                        ║");
         } else {
             out.println("║ 【全棧服務連結】                                                          ║");
-            out.printf("║   Gateway Health      %s%n", gateway + "/actuator/health");
+            out.printf("║   Gateway Health      %s%s%n", gateway + "/actuator/health", mark(probe, gateway + "/actuator/health"));
             out.printf("║   Gateway Metrics     %s%n", gateway + "/actuator/prometheus");
-            out.printf("║   Engine Health       %s%n", engine + "/actuator/health");
+            out.printf("║   Engine Health       %s%s%n", engine + "/actuator/health", mark(probe, engine + "/actuator/health"));
             out.printf("║   Prometheus          %s%n", prometheus);
             out.printf("║   Grafana             %s%n", grafana);
             out.printf("║   Swagger (Gateway)   %s%n", gateway + "/swagger-ui.html");
@@ -149,6 +153,33 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
      * 【職責】以 UTF-8 寫出 banner（與 JVM stdout.encoding=UTF-8、IDE Console UTF-8 對齊）。
      * 【技巧】勿依賴系統預設 MS950；端到端 UTF-8 才能 run-anywhere。
      */
+
+    private static String mark(boolean probe, String url) {
+        if (!probe || url == null || !url.startsWith("http")) {
+            return "";
+        }
+        return "  [" + (isUp(url) ? "UP" : "DOWN") + "]";
+    }
+
+    private static boolean isUp(String url) {
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) URI.create(url).toURL().openConnection();
+            conn.setConnectTimeout(800);
+            conn.setReadTimeout(800);
+            conn.setRequestMethod("GET");
+            conn.setInstanceFollowRedirects(true);
+            int code = conn.getResponseCode();
+            return code >= 200 && code < 500;
+        } catch (Exception ex) {
+            return false;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
     private static PrintStream utf8Out() {
         return new PrintStream(System.out, true, StandardCharsets.UTF_8);
     }

@@ -4,6 +4,7 @@ import com.trading.domain.OrderSide;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ class CreateOrderRequestValidationTest {
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Test
+    @DisplayName("ORDER-003 missing required symbol fails bean validation")
     void ORDER_003_missingSymbol_failsValidation() {
         CreateOrderRequest request = new CreateOrderRequest();
         request.setSide(OrderSide.BUY);

@@ -45,6 +45,23 @@ class PnlSnapshotServiceTest {
     }
 
     @Test
+    void findByDate_null_usesToday() {
+        when(pnlSnapshotRepository.findBySnapshotDate(LocalDate.now())).thenReturn(List.of());
+
+        assertThat(service.findByDate(null)).isEmpty();
+        verify(pnlSnapshotRepository).findBySnapshotDate(LocalDate.now());
+    }
+
+    @Test
+    void findByDate_explicitDate_queriesThatDay() {
+        LocalDate date = LocalDate.of(2026, 8, 1);
+        PnlSnapshotEntity row = new PnlSnapshotEntity();
+        when(pnlSnapshotRepository.findBySnapshotDate(date)).thenReturn(List.of(row));
+
+        assertThat(service.findByDate(date)).containsExactly(row);
+    }
+
+    @Test
     void JOB_PNL_001_SNAPSHOT_writesRowPerPosition() {
         when(positionRepository.findAll()).thenReturn(List.of(position("BTCUSDT", "0.5", "500")));
         when(pnlSnapshotRepository.findBySnapshotDateAndSymbol(any(LocalDate.class), eq("BTCUSDT")))

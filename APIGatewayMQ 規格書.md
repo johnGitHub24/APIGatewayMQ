@@ -14,12 +14,12 @@
 |------|------|
 | **`APIGatewayMQ 規格書.md`** | **主規格書（本文件）** |
 | `APIGatewayMQ 架構（Spring Boot）.md` | 架構深度說明、Gateway/Kafka/Engine 哲學 |
-| `docs/架構學習導引.md` | 技術架構學習地圖（推薦起手式） |
-| `docs/專案引導教學.html` | 可點選的互動架構與流程圖 |
-| `docs/功能流程說明.md` | 每個 API「做什麼、怎麼跑」 |
-| `docs/初學者學習說明書.md` | 環境、啟動、操作步驟 |
+| `docs/architecture.md` | 技術架構學習地圖（推薦起手式） |
+| `docs/codeGraphic.html` | 可點選的互動架構與流程圖 |
+| `docs/architecture.md` | 每個 API「做什麼、怎麼跑」 |
+| `docs/architecture.md` | 環境、啟動、操作步驟 |
 | `API規格書.md` | API 端點完整參考（錯誤碼、範例） |
-| `docs/測試與CI.md` | Case ID 對照、CI 與腳本 |
+| `docs/testing.md` | Case ID 對照、CI 與腳本 |
 
 ### 0.2 外部參考（非本專案規格）
 
@@ -102,15 +102,15 @@ houseHub 測試規格書  ──方法論──►  本文件 §第 6 章（測�
 ### 1.4 啟動方式
 
 ```powershell
-cd "D:\ClaudeCode\APIGatewayMQ"
-
-# Docker 全棧（推薦）
-.\scripts\start.ps1
-
-# 測試
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
-.\gradlew.bat check
+.\scripts\check.ps1
+.\gradlew.bat :gateway:bootRun
+# 另開終端
+.\gradlew.bat :engine:bootRun
 ```
+
+IntelliJ：專案根 → Gradle Sync → **`:gateway:bootRun`**／**`:engine:bootRun`**。預設 `local`（H2），不必 Docker。
+
+可選全棧（需 Docker Desktop）：`docker compose up -d`，再以 `SPRING_PROFILES_ACTIVE=docker` 啟動。
 
 ---
 
@@ -379,7 +379,7 @@ docs/test-data/
 - [ ] Engine Consumer 處理後 DB 有訂單
 - [ ] 限流超過閾值回 429
 - [ ] 冪等鍵重複不產生第二筆訂單
-- [ ] Docker 全棧可啟動（`.\scripts\start.ps1`）
+- [ ] （可選）Docker 全棧可啟動（`docker compose up -d`）
 
 ---
 
@@ -410,15 +410,14 @@ docs/test-data/
 | Swagger (Engine) | http://localhost:8081/swagger-ui/index.html |
 | Swagger 靜態文件 | `docs/swagger.html`（載入 `docs/openapi-*-live.yaml`） |
 
-### 7.3 驗證腳本
+### 7.3 驗證與啟動（Pure）
 
-| 腳本 | 用途 |
+| 指令 | 用途 |
 |------|------|
-| `.\scripts\start.ps1` | 建置 JAR + docker compose up |
-| `.\scripts\verify-docker.ps1` | 全棧啟動 + smoke test |
-| `.\scripts\smoke-test.ps1` | 下單 + 輪詢驗證 |
-| `.\scripts\load-test.ps1` | 壓力測試（驗證限流與削峰） |
-| `.\scripts\check.ps1` | `gradlew check` 包裝 |
+| `.\scripts\check.ps1` | unit + integration（與 CI 同一入口） |
+| `.\gradlew.bat :gateway:bootRun` | 本機 Gateway（:8080） |
+| `.\gradlew.bat :engine:bootRun` | 本機 Engine（:8081，預設 H2） |
+| `docker compose up -d` | （可選）Kafka／Redis／PostgreSQL／監控 |
 
 ### 7.4 關鍵類別索引
 

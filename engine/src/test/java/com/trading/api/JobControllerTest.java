@@ -7,8 +7,10 @@ import com.trading.application.StaleOrderCancellationService;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.trading.config.GlobalExceptionHandler;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -21,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Tag("unit")
 @WebMvcTest(JobController.class)
+@Import(GlobalExceptionHandler.class)
 class JobControllerTest {
 
     @Autowired
@@ -96,5 +99,13 @@ class JobControllerTest {
         mockMvc.perform(get("/api/v1/failed-commands"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void JOB_API_007_runJobWhenServiceThrows_returns500() throws Exception {
+        when(staleOrderCancellationService.cancelStaleOrders()).thenThrow(new IllegalStateException("job failed"));
+
+        mockMvc.perform(post("/api/v1/jobs/stale-order-cancellation"))
+                .andExpect(status().isInternalServerError());
     }
 }

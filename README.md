@@ -5,22 +5,22 @@
 > [Trading System MVP](../Trading%20System%20MVP) 專注 **交易業務、風控、狀態機、測試**。  
 > 建議先學 MVP，再學本專案。
 
+繼承 EngineeringOS eos-minimal @ **0.1.10**。
+
 ## 文件入口
+
+單一入口：本 README。衝突以主規格為準。
 
 | 文件 | 說明 |
 |------|------|
-| [APIGatewayMQ 規格書.md](APIGatewayMQ%20規格書.md) | **主規格書（權威）** |
-| [API規格書.md](API規格書.md) | API 端點、錯誤碼、範例 |
-| [docs/architecture.md](docs/architecture.md) | 分層與模組（可執行摘要） |
-| [docs/codeGraphic.html](docs/codeGraphic.html) | Tab 式架構圖（非同步／限流／Engine／模組） |
-| [docs/testing.md](docs/testing.md) | 驗證入口／DoD |
-| [docs/資料庫設計.md](docs/資料庫設計.md) | 表／Entity／環境 |
-| [docs/驗證設計.md](docs/驗證設計.md) | 限流／錯誤碼分層 |
-| [docs/測試與CI.md](docs/測試與CI.md) | Case ID、CI 腳本 |
-| [docs/架構學習導引.md](docs/架構學習導引.md) | 學習路線 |
-| [docs/專案引導教學.html](docs/專案引導教學.html) | 互動架構圖 |
-| [docs/初學者學習說明書.md](docs/初學者學習說明書.md) | 第一次跑起來 |
-| [CLAUDE.md](CLAUDE.md) | AI／工程薄規則（EOS 0.1.4） |
+| [APIGatewayMQ 規格書.md](APIGatewayMQ%20規格書.md) | API 契約 |
+| [docs/architecture.md](docs/architecture.md) | 分層與模組 |
+| [docs/codeGraphic.html](docs/codeGraphic.html) | 架構圖（非權威） |
+| [docs/testing.md](docs/testing.md) | 測試／Case／check |
+| [docs/資料庫設計.md](docs/資料庫設計.md) | 資料庫 |
+| [docs/驗證設計.md](docs/驗證設計.md) | 驗證／權限 |
+| [CLAUDE.md](CLAUDE.md) | AI 薄規則 |
+| [scripts/README.md](scripts/README.md) | 驗證／啟動腳本 |
 
 ## 架構
 
@@ -36,33 +36,22 @@ API Gateway (:8080)  ──限流(Redis)──► Kafka (order.commands)
 Prometheus (:9090) + Grafana (:3000) ◄── Actuator metrics
 ```
 
-## 快速開始
-
-### 前置
-
-- Docker Desktop
-- JDK 21（本地開發時）
-
-### 一鍵啟動（Docker 全棧）
+## 快速開始（Pure）
 
 ```powershell
-cd "D:\ClaudeCode\APIGatewayMQ"
-.\scripts\start.ps1
-```
-
-### 本地開發（基礎設施 Docker + 本機 Java）
-
-```powershell
-# 1. 啟動 Kafka / PostgreSQL / Redis
-docker compose up -d postgres redis zookeeper kafka
-
-# 2. 建置
-.\gradlew.bat :engine:bootRun --args="--server.port=8081"
-# 另開終端
-.\gradlew.bat :engine:bootRun --args="--server.port=8082"
-# 另開終端
+.\scripts\check.ps1
 .\gradlew.bat :gateway:bootRun
 ```
+
+另開終端跑 Engine：
+
+```powershell
+.\gradlew.bat :engine:bootRun
+```
+
+IntelliJ：Open **專案根** → SDK 21 → Gradle Sync → Gradle 窗 **`:gateway:bootRun`**（Engine 同理 `:engine:bootRun`）。
+
+`local` profile（預設）用 H2，不必 Docker。驗證與 CI 同一入口：`.\scripts\check.ps1`。
 
 ## API 流程
 
@@ -125,18 +114,15 @@ GET http://localhost:8080/api/v1/orders?clientOrderId=demo-order-001
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3000 (admin/admin) |
 
-## 測試
+## 可選：Docker 全棧
+
+本機學習用 Pure（H2 + `bootRun`）即可。若要 Kafka／Redis／PostgreSQL／多副本 Engine，先開 Docker Desktop，再：
 
 ```powershell
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
-.\gradlew.bat check
+docker compose up -d
 ```
 
-## 壓力測試
-
-```powershell
-.\scripts\load-test.ps1 -Requests 200 -Concurrency 20
-```
+`SPRING_PROFILES_ACTIVE=docker` 後以 Gradle `bootRun` 或 compose 內服務連同一套基礎設施。停止：`docker compose down`。
 
 ## 與 Trading System MVP 關係
 
@@ -148,10 +134,5 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
 - 兩個 repo **獨立**，互不依賴，各自可單獨跑
 - Engine 內含交易邏輯，是為了示範 **MQ Consumer 如何處理訂單**
 
-## 停止
+> Docs standard: EngineeringOS eos-minimal @ 0.1.10 — `knowledge/documentation.md`
 
-```powershell
-docker compose down
-```
-
-> Docs standard: EngineeringOS eos-minimal @ 0.1.4 — `knowledge/documentation.md`

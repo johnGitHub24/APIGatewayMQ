@@ -334,8 +334,8 @@ Gateway 發送至 topic `order.commands` 的 payload（詳見主規格書 §5）
 | 文件 | 用途 |
 |------|------|
 | [`APIGatewayMQ 規格書.md`](APIGatewayMQ%20規格書.md) | 主規格（權威） |
-| [`docs/功能流程說明.md`](docs/功能流程說明.md) | 各 API 流程圖 |
-| [`docs/專案引導教學.html`](docs/專案引導教學.html) | 互動架構圖 |
+| [`docs/architecture.md`](docs/architecture.md) | 各 API 流程圖 |
+| [`docs/codeGraphic.html`](docs/codeGraphic.html) | 互動架構圖 |
 | Trading System MVP 規格書 §4 | Engine 風控與狀態機細節 |
 
 ---

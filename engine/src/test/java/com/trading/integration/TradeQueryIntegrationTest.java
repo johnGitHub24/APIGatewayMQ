@@ -80,4 +80,11 @@ class TradeQueryIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.trades[0].executedQty").exists());
     }
+
+    @Test
+    void GET_trade_missing_returns404() throws Exception {
+        mockMvc.perform(get("/api/v1/trades/999999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("TRADE_NOT_FOUND"));
+    }
 }

@@ -7,6 +7,7 @@ import com.trading.domain.OrderSide;
 import com.trading.infrastructure.entity.OrderEntity;
 import com.trading.infrastructure.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +60,7 @@ class RiskEngineTest {
     }
 
     @Test
+    @DisplayName("ORDER-001 valid order is approved")
     void ORDER_001_validOrder_approves() {
         RiskResult result = riskEngine.validate(context("key-1", "BTCUSDT", OrderSide.BUY,
                 new BigDecimal("0.5"), new BigDecimal("65000"), BigDecimal.ZERO, BigDecimal.ZERO),
@@ -67,6 +69,16 @@ class RiskEngineTest {
     }
 
     @Test
+    @DisplayName("ORDER-002 at max position quantity is still approved")
+    void ORDER_002_atPositionLimit_approves() {
+        RiskResult result = riskEngine.validate(context(null, "BTCUSDT", OrderSide.BUY,
+                new BigDecimal("100"), new BigDecimal("100"), BigDecimal.ZERO, BigDecimal.ZERO),
+                MarketContext.neutral("BTCUSDT"));
+        assertThat(result.isApproved()).isTrue();
+    }
+
+    @Test
+    @DisplayName("ORDER-004 zero quantity is rejected as R003")
     void ORDER_004_zeroQuantity_rejectsR003() {
         RiskResult result = riskEngine.validate(context(null, "BTCUSDT", OrderSide.BUY,
                 BigDecimal.ZERO, new BigDecimal("65000"), BigDecimal.ZERO, BigDecimal.ZERO),
@@ -76,6 +88,7 @@ class RiskEngineTest {
     }
 
     @Test
+    @DisplayName("ORDER-005 projected position over limit is rejected as R001")
     void ORDER_005_positionLimit_rejectsR001() {
         RiskResult result = riskEngine.validate(context(null, "BTCUSDT", OrderSide.BUY,
                 new BigDecimal("50"), new BigDecimal("1000"), new BigDecimal("60"),

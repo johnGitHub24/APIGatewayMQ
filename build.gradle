@@ -47,3 +47,7 @@ tasks.register('exportOpenApi') {
     description = 'Exports springdoc YAML to docs/openapi-*-live.yaml'
     dependsOn ':engine:exportOpenApi', ':gateway:exportOpenApi'
 }
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

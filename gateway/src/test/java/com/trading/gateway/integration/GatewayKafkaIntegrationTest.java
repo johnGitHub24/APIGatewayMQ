@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,7 @@ class GatewayKafkaIntegrationTest {
     }
 
     @Test
+    @DisplayName("GW-001 GW-003 post order appears on Kafka topic")
     void GW_003_postOrder_messageAppearsOnKafkaTopic() throws Exception {
         String body = GatewayTestFixtures.loadGatewayOrderJson("GW-ORDER-001-SUCCESS");
 
@@ -87,5 +89,16 @@ class GatewayKafkaIntegrationTest {
             assertThat(record.value().getClientOrderId()).isEqualTo("gw-kafka-001");
             assertThat(record.value().getSymbol()).isEqualTo("BTCUSDT");
         }
+    }
+
+    @Test
+    void GW_006_postOrder_missingSymbol_returns400() {
+        webTestClient.post()
+                .uri("/api/v1/orders")
+                .header("Idempotency-Key", "gw-kafka-bad")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"side\":\"BUY\",\"quantity\":0.5,\"price\":65000}")
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 }
