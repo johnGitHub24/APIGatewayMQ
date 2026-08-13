@@ -14,4 +14,4 @@ Script: EngineeringOS/eos-minimal/hooks/export-codeGraphic-images.ps1
 
 Re-run from project root:
 
-    & "..\EngineeringOS\eos-minimal\hooks\export-codeGraphic-images.ps1" -ProjectRoot .
+    & "d:\ClaudeCode\EngineeringOS\eos-minimal\hooks\export-codeGraphic-images.ps1" -ProjectRoot .

@@ -26,4 +26,4 @@
 
 1. IntelliJ 無 Active profiles（或 `local`）啟動 Engine → 成功 → Console 有連結框
 2. `docker compose` Engine 容器仍連 PostgreSQL
-3. `docs/architecture.md` 先寫「IntelliJ + H2」再寫 Docker 全棧
+3. `docs/初學者學習說明書.md` 先寫「IntelliJ + H2」再寫 Docker 全棧

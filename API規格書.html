@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API 規格書 — APIGatewayMQ</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg:#0f1419; --surface:#1a2332; --surface2:#243044; --border:#2d3a4f;
+      --text:#e6edf3; --muted:#8b9cb3; --accent:#3b82f6; --accent2:#10b981; --warn:#f59e0b;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:"Segoe UI","Microsoft JhengHei",sans-serif;
+      background:var(--bg); color:var(--text); line-height:1.65;
+    }
+    .bar {
+      position:sticky; top:0; z-index:10;
+      display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem;
+      padding:0.75rem 1.25rem; background:var(--surface);
+      border-bottom:1px solid var(--border);
+    }
+    .bar a { color:var(--accent); text-decoration:none; }
+    .bar .src { color:var(--muted); font-size:0.85rem; }
+    .bar .badge {
+      font-size:0.75rem; color:var(--warn); border:1px solid var(--warn);
+      border-radius:4px; padding:0.1rem 0.45rem;
+    }
+    main { max-width:880px; margin:0 auto; padding:1.5rem 1.25rem 3rem; }
+    h1,h2,h3,h4 { line-height:1.3; }
+    h1 { font-size:1.7rem; border-bottom:2px solid var(--accent); padding-bottom:0.4rem; }
+    h2 { font-size:1.3rem; margin-top:1.75rem; border-bottom:1px solid var(--border); padding-bottom:0.3rem; }
+    h3 { font-size:1.1rem; margin-top:1.25rem; color:var(--accent2); }
+    a { color:var(--accent); }
+    code, pre { font-family:Consolas,"Courier New",monospace; }
+    code { background:var(--surface2); padding:0.1rem 0.35rem; border-radius:4px; font-size:0.9em; }
+    pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto; }
+    pre code { background:transparent; padding:0; }
+    table { border-collapse:collapse; width:100%; margin:1rem 0; font-size:0.92rem; }
+    th, td { border:1px solid var(--border); padding:0.45rem 0.65rem; text-align:left; }
+    th { background:var(--surface2); }
+    blockquote {
+      margin:1rem 0; padding:0.5rem 0.9rem; border-left:3px solid var(--warn);
+      background:var(--surface2); color:var(--muted);
+    }
+    .mermaid { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1rem; overflow-x:auto; }
+    hr { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+    footer { max-width:880px; margin:0 auto; padding:0 1.25rem 2rem; color:var(--muted); font-size:0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <a href="docs/codeGraphic.html">← CodeGraphic</a>
+    <span class="badge">companion HTML</span>
+    <span class="src">來源（權威）：API規格書.md</span>
+  </div>
+  <main>
+<h1>API 規格書 — APIGatewayMQ</h1>
+<blockquote>
+<p><strong>本文件為 API 契約的完整參考。</strong><br />
+與 <a href="APIGatewayMQ%20%E8%A6%8F%E6%A0%BC%E6%9B%B8.html"><code>APIGatewayMQ 規格書.md</code></a> 第 4 章互為補充；若有衝突以主規格書為準。<br />
+Engine 端點的風控規則、狀態機與 Trading System MVP 規格書一致。</p>
+</blockquote>
+<hr />
+<h2>0. 路由總覽</h2>
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>路徑</th>
+  <th>走哪條路</th>
+  <th>回應</th>
+  <th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>POST</td>
+  <td><code>/api/v1/orders</code></td>
+  <td>Gateway → Kafka</td>
+  <td><strong>202</strong></td>
+  <td>正式非同步下單</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/v1/orders?clientOrderId=</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>輪詢訂單狀態</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/v1/orders/{id}</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>依 ID 查單筆</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/v1/orders</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>訂單列表</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/v1/positions</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>查持倉</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/v1/pnl</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>查損益</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/v1/trades</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>成交列表</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/v1/orders/{id}/fill</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>手動補成交</td>
+</tr>
+<tr>
+  <td>PATCH</td>
+  <td><code>/api/v1/orders/{id}/cancel</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>取消訂單</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/v1/orders/{id}/events</code></td>
+  <td>Gateway → Engine</td>
+  <td>200</td>
+  <td>訂單審計事件</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/v1/orders</code></td>
+  <td>Engine 直連 (:8081)</td>
+  <td>201</td>
+  <td>同步下單（測試用）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Base URL</strong></p>
+<table>
+<thead>
+<tr>
+  <th>環境</th>
+  <th>Gateway</th>
+  <th>Engine（直連，除錯用）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Docker 全棧</td>
+  <td><code>http://localhost:8080</code></td>
+  <td><code>http://localhost:8081</code></td>
+</tr>
+<tr>
+  <td>本機開發</td>
+  <td><code>http://localhost:8080</code></td>
+  <td><code>http://localhost:8081</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>OpenAPI / Swagger</strong></p>
+<table>
+<thead>
+<tr>
+  <th>服務</th>
+  <th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Gateway</td>
+  <td>http://localhost:8080/swagger-ui.html</td>
+</tr>
+<tr>
+  <td>Engine</td>
+  <td>http://localhost:8081/swagger-ui/index.html</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>1. Gateway 非同步下單</h2>
+<h3>POST <code>/api/v1/orders</code></h3>
+<p>將下單指令排入 Kafka，立即回 202，Client 以 <code>pollUrl</code> 輪詢結果。</p>
+<h4>Request Headers</h4>
+<table>
+<thead>
+<tr>
+  <th>Header</th>
+  <th>必填</th>
+  <th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>Content-Type</code></td>
+  <td>是</td>
+  <td><code>application/json</code></td>
+</tr>
+<tr>
+  <td><code>Idempotency-Key</code></td>
+  <td>建議</td>
+  <td>冪等鍵；對應 <code>clientOrderId</code>；重送不會重複建單</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>若未提供 <code>Idempotency-Key</code>，可使用 body 的 <code>clientOrderId</code>；兩者皆無則 Gateway 自動產生 UUID。</p>
+</blockquote>
+<h4>Request Body</h4>
+<pre><code class="language-json">{
+  &quot;symbol&quot;: &quot;BTCUSDT&quot;,
+  &quot;side&quot;: &quot;BUY&quot;,
+  &quot;quantity&quot;: 0.5,
+  &quot;price&quot;: 65000.00
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+  <th>欄位</th>
+  <th>型別</th>
+  <th>必填</th>
+  <th>約束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>symbol</td>
+  <td>string</td>
+  <td>是</td>
+  <td>交易標的；同時為 Kafka partition key</td>
+</tr>
+<tr>
+  <td>side</td>
+  <td>string</td>
+  <td>是</td>
+  <td><code>BUY</code> / <code>SELL</code></td>
+</tr>
+<tr>
+  <td>quantity</td>
+  <td>number</td>
+  <td>是</td>
+  <td>&gt; 0</td>
+</tr>
+<tr>
+  <td>price</td>
+  <td>number</td>
+  <td>是</td>
+  <td>&gt; 0</td>
+</tr>
+<tr>
+  <td>clientOrderId</td>
+  <td>string</td>
+  <td>否</td>
+  <td>可選；優先使用 Header <code>Idempotency-Key</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Response 202 Accepted</h4>
+<pre><code class="language-json">{
+  &quot;commandId&quot;: &quot;550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;clientOrderId&quot;: &quot;demo-order-001&quot;,
+  &quot;status&quot;: &quot;ACCEPTED&quot;,
+  &quot;message&quot;: &quot;Order queued for processing&quot;,
+  &quot;pollUrl&quot;: &quot;/api/v1/orders?clientOrderId=demo-order-001&quot;,
+  &quot;acceptedAt&quot;: &quot;2026-07-06T13:00:00Z&quot;
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+  <th>欄位</th>
+  <th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>commandId</td>
+  <td>本筆 Kafka 訊息的 UUID，用於日誌追蹤</td>
+</tr>
+<tr>
+  <td>clientOrderId</td>
+  <td>業務冪等 ID</td>
+</tr>
+<tr>
+  <td>pollUrl</td>
+  <td>輪詢路徑（相對路徑，接 Gateway base URL）</td>
+</tr>
+<tr>
+  <td>status</td>
+  <td>固定 <code>ACCEPTED</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Response 429 Too Many Requests</h4>
+<pre><code class="language-json">{
+  &quot;errorCode&quot;: &quot;RATE_LIMIT_EXCEEDED&quot;,
+  &quot;message&quot;: &quot;Too many requests, retry later&quot;
+}
+</code></pre>
+<p>Header：<code>Retry-After: 1</code></p>
+<h4>Response 503 Service Unavailable</h4>
+<p>Kafka 發送失敗時回傳，表示指令未能排入佇列。</p>
+<h4>Response 400 Bad Request</h4>
+<p>欄位驗證失敗（<code>@Valid</code>）。</p>
+<hr />
+<h2>2. 輪詢與查詢（Gateway 代理）</h2>
+<h3>GET <code>/api/v1/orders?clientOrderId={id}</code></h3>
+<p>輪詢非同步下單結果。Gateway 以 Round-Robin 代理至 Engine。</p>
+<p><strong>範例</strong></p>
+<pre><code class="language-http">GET /api/v1/orders?clientOrderId=demo-order-001
+</code></pre>
+<p><strong>Response 200 OK</strong>（處理完成）</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 1,
+  &quot;clientOrderId&quot;: &quot;demo-order-001&quot;,
+  &quot;symbol&quot;: &quot;BTCUSDT&quot;,
+  &quot;side&quot;: &quot;BUY&quot;,
+  &quot;quantity&quot;: 0.5,
+  &quot;price&quot;: 65000.00,
+  &quot;filledQuantity&quot;: 0.5,
+  &quot;status&quot;: &quot;FILLED&quot;,
+  &quot;createdAt&quot;: &quot;2026-07-06T13:00:01Z&quot;,
+  &quot;updatedAt&quot;: &quot;2026-07-06T13:00:02Z&quot;
+}
+</code></pre>
+<p><strong>訂單狀態值</strong></p>
+<table>
+<thead>
+<tr>
+  <th>status</th>
+  <th>意義</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>NEW</td>
+  <td>已建立，尚未成交</td>
+</tr>
+<tr>
+  <td>PARTIALLY_FILLED</td>
+  <td>部分成交</td>
+</tr>
+<tr>
+  <td>FILLED</td>
+  <td>全部成交</td>
+</tr>
+<tr>
+  <td>REJECTED</td>
+  <td>風控拒絕</td>
+</tr>
+<tr>
+  <td>CANCELLED</td>
+  <td>已取消</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>輪詢時若 Engine 尚未處理完，可能短暫回 404；Client 應間隔重試（建議 500ms～1s）。</p>
+</blockquote>
+<h3>GET <code>/api/v1/orders/{orderId}</code></h3>
+<p>依資料庫主鍵查單筆訂單。</p>
+<h3>GET <code>/api/v1/orders</code></h3>
+<p>查詢訂單列表（支援分頁參數，依 Engine 實作）。</p>
+<h3>GET <code>/api/v1/positions</code></h3>
+<p>查詢所有持倉。</p>
+<p><strong>Response 200 範例</strong></p>
+<pre><code class="language-json">[
+  {
+    &quot;symbol&quot;: &quot;BTCUSDT&quot;,
+    &quot;quantity&quot;: 0.5,
+    &quot;avgPrice&quot;: 65000.00,
+    &quot;unrealizedPnl&quot;: 0.00
+  }
+]
+</code></pre>
+<h3>GET <code>/api/v1/pnl</code></h3>
+<p>查詢損益摘要。</p>
+<h3>GET <code>/api/v1/trades</code></h3>
+<p>查詢成交紀錄列表。</p>
+<h3>GET <code>/api/v1/orders/{id}/events</code></h3>
+<p>查詢訂單審計事件鏈（RECEIVED → RISK_CHECK → APPROVED/REJECTED → FILLED）。</p>
+<hr />
+<h2>3. 訂單操作（Gateway 代理）</h2>
+<h3>POST <code>/api/v1/orders/{id}/fill</code></h3>
+<p>手動補成交（測試或管理用途）。適用於 <code>PARTIALLY_FILLED</code> 狀態的訂單。</p>
+<h3>PATCH <code>/api/v1/orders/{id}/cancel</code></h3>
+<p>取消訂單。僅 <code>NEW</code> / <code>PARTIALLY_FILLED</code> 可取消。</p>
+<hr />
+<h2>4. Engine 同步下單（測試用）</h2>
+<h3>POST <code>http://localhost:8081/api/v1/orders</code></h3>
+<p>不經 Kafka，同步執行風控與撮合，直接回 201。</p>
+<pre><code class="language-http">POST http://localhost:8081/api/v1/orders
+Content-Type: application/json
+
+{
+  &quot;symbol&quot;: &quot;BTCUSDT&quot;,
+  &quot;side&quot;: &quot;BUY&quot;,
+  &quot;quantity&quot;: 0.5,
+  &quot;price&quot;: 65000,
+  &quot;clientOrderId&quot;: &quot;sync-test-001&quot;
+}
+</code></pre>
+<p><strong>Response 201 Created</strong> — 訂單已寫入 DB。</p>
+<blockquote>
+<p>生產環境建議一律走 Gateway 非同步路徑（202）。</p>
+</blockquote>
+<hr />
+<h2>5. 錯誤回應格式</h2>
+<p>Engine 使用 RFC 7807 風格 JSON（<code>GlobalExceptionHandler</code>）：</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;about:blank&quot;,
+  &quot;title&quot;: &quot;Risk Rejected&quot;,
+  &quot;status&quot;: 422,
+  &quot;errorCode&quot;: &quot;RISK_POSITION_LIMIT&quot;,
+  &quot;detail&quot;: &quot;Position limit exceeded for BTCUSDT&quot;,
+  &quot;ruleCode&quot;: &quot;R001&quot;
+}
+</code></pre>
+<h3>HTTP 狀態碼對照</h3>
+<table>
+<thead>
+<tr>
+  <th>HTTP</th>
+  <th>情境</th>
+  <th>errorCode 範例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>400</td>
+  <td>欄位驗證失敗</td>
+  <td><code>VALIDATION_FAILED</code></td>
+</tr>
+<tr>
+  <td>404</td>
+  <td>訂單/持倉不存在</td>
+  <td><code>ORDER_NOT_FOUND</code></td>
+</tr>
+<tr>
+  <td>405</td>
+  <td>方法不允許</td>
+  <td><code>METHOD_NOT_ALLOWED</code></td>
+</tr>
+<tr>
+  <td>409</td>
+  <td>冪等重複下單</td>
+  <td><code>DUPLICATE_ORDER</code></td>
+</tr>
+<tr>
+  <td>422</td>
+  <td>風控拒絕</td>
+  <td><code>RISK_*</code></td>
+</tr>
+<tr>
+  <td>429</td>
+  <td>Gateway 限流</td>
+  <td><code>RATE_LIMIT_EXCEEDED</code></td>
+</tr>
+<tr>
+  <td>503</td>
+  <td>Kafka 發送失敗</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>500</td>
+  <td>內部錯誤</td>
+  <td><code>INTERNAL_ERROR</code></td>
+</tr>
+</tbody>
+</table>
+<h3>風控 errorCode 對照</h3>
+<table>
+<thead>
+<tr>
+  <th>errorCode</th>
+  <th>規則碼</th>
+  <th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>RISK_POSITION_LIMIT</code></td>
+  <td>R001</td>
+  <td>單標的持倉上限</td>
+</tr>
+<tr>
+  <td><code>RISK_EXPOSURE_LIMIT</code></td>
+  <td>R002</td>
+  <td>總曝險上限</td>
+</tr>
+<tr>
+  <td><code>RISK_INVALID_ORDER</code></td>
+  <td>R003</td>
+  <td>數量/價格不合法</td>
+</tr>
+<tr>
+  <td><code>DUPLICATE_ORDER</code></td>
+  <td>R004</td>
+  <td>重複 clientOrderId</td>
+</tr>
+<tr>
+  <td><code>RISK_VOLATILITY_LIMIT</code></td>
+  <td>R005</td>
+  <td>極端波動拒絕</td>
+</tr>
+<tr>
+  <td><code>RISK_OVERTRADING</code></td>
+  <td>R006</td>
+  <td>過度交易</td>
+</tr>
+<tr>
+  <td><code>RISK_MARKET_CHOPPY</code></td>
+  <td>R007</td>
+  <td>市場震盪不適合</td>
+</tr>
+<tr>
+  <td><code>RISK_TREND_WEAK</code></td>
+  <td>R008</td>
+  <td>趨勢不足</td>
+</tr>
+<tr>
+  <td><code>RISK_SIGNAL_NOISY</code></td>
+  <td>R009</td>
+  <td>訊號雜訊</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>R010（VolatilityAdjustRule）為<strong>縮量</strong>而非拒絕，不產生 422。</p>
+</blockquote>
+<hr />
+<h2>6. 典型呼叫流程</h2>
+<h3>非同步下單 + 輪詢</h3>
+<pre><code class="language-text">1. POST /api/v1/orders  (Gateway :8080)
+   Header: Idempotency-Key: demo-001
+   → 202 + pollUrl
+
+2. GET /api/v1/orders?clientOrderId=demo-001  (Gateway :8080)
+   → 重試直到 status = FILLED 或 REJECTED
+
+3. GET /api/v1/positions  (Gateway :8080)
+   → 200 持倉列表
+</code></pre>
+<h3>cURL 範例</h3>
+<pre><code class="language-bash"># 下單
+curl -X POST http://localhost:8080/api/v1/orders \
+  -H &quot;Content-Type: application/json&quot; \
+  -H &quot;Idempotency-Key: demo-001&quot; \
+  -d &#x27;{&quot;symbol&quot;:&quot;BTCUSDT&quot;,&quot;side&quot;:&quot;BUY&quot;,&quot;quantity&quot;:0.5,&quot;price&quot;:65000}&#x27;
+
+# 輪詢
+curl &quot;http://localhost:8080/api/v1/orders?clientOrderId=demo-001&quot;
+
+# 持倉
+curl http://localhost:8080/api/v1/positions
+</code></pre>
+<hr />
+<h2>7. Kafka 訊息契約（寫入路徑）</h2>
+<p>Gateway 發送至 topic <code>order.commands</code> 的 payload（詳見主規格書 §5）：</p>
+<pre><code class="language-json">{
+  &quot;commandId&quot;: &quot;uuid&quot;,
+  &quot;clientOrderId&quot;: &quot;demo-order-001&quot;,
+  &quot;symbol&quot;: &quot;BTCUSDT&quot;,
+  &quot;side&quot;: &quot;BUY&quot;,
+  &quot;quantity&quot;: 0.5,
+  &quot;price&quot;: 65000.00,
+  &quot;submittedAt&quot;: &quot;2026-07-06T13:00:00Z&quot;,
+  &quot;sourceGateway&quot;: &quot;gateway-1&quot;
+}
+</code></pre>
+<hr />
+<h2>8. 相關文件</h2>
+<table>
+<thead>
+<tr>
+  <th>文件</th>
+  <th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><a href="APIGatewayMQ%20%E8%A6%8F%E6%A0%BC%E6%9B%B8.html"><code>APIGatewayMQ 規格書.md</code></a></td>
+  <td>主規格（權威）</td>
+</tr>
+<tr>
+  <td><a href="docs/%E5%8A%9F%E8%83%BD%E6%B5%81%E7%A8%8B%E8%AA%AA%E6%98%8E.html"><code>docs/功能流程說明.md</code></a></td>
+  <td>各 API 流程圖</td>
+</tr>
+<tr>
+  <td><a href="docs/%E5%B0%88%E6%A1%88%E5%BC%95%E5%B0%8E%E6%95%99%E5%AD%B8.html"><code>docs/專案引導教學.html</code></a></td>
+  <td>互動架構圖</td>
+</tr>
+<tr>
+  <td>Trading System MVP 規格書 §4</td>
+  <td>Engine 風控與狀態機細節</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>最後更新：2026-07-07</em></p>
+
+  </main>
+  <footer>由 eos-minimal/hooks/md-to-companion-html 產生 · 請改 .md 後重跑腳本 · 勿當權威契約</footer>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: "dark", securityLevel: "loose" });
+  </script>
+</body>
+</html>
