@@ -21,3 +21,6 @@ dist/
 *.pyc
 Thumbs.db
 
+
+# eos-minimal onboard
+.env
