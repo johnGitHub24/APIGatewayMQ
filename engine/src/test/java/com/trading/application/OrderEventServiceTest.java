@@ -16,8 +16,8 @@ import static org.mockito.Mockito.verify;
 
 /**
  * 【職責】保護 {@link OrderEventService#log} 寫入審計事件欄位。
- * 【技巧】ArgumentCaptor 檢查 Entity 組裝。
- * 【概念】事件流是過程，訂單狀態是結果；單測鎖定寫入契約。
+ * <p>【技巧】ArgumentCaptor 檢查 Entity 組裝。
+ * <p>【概念】事件流是過程，訂單狀態是結果；單測鎖定寫入契約。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

@@ -8,9 +8,9 @@ import java.util.List;
 
 /**
  * 【職責】訂單事件時間軸回應：依時間列出生命週期事件，供追蹤與除錯。
- * 【技巧】外層 DTO + 巢狀 {@link EventItem}；Lombok {@code @Data}。
- * 【概念】查單只看 status 不夠；事件軸能還原「風控何時拒、何時部分成交」等過程。
- * 【邊界】不負責寫入事件；寫入在下單／成交流程，此處僅查詢投影。
+ * <p>【技巧】外層 DTO + 巢狀 {@link EventItem}；Lombok {@code @Data}。
+ * <p>【概念】查單只看 status 不夠；事件軸能還原「風控何時拒、何時部分成交」等過程。
+ * <p>【邊界】不負責寫入事件；寫入在下單／成交流程，此處僅查詢投影。
  */
 @Data
 public class OrderEventsResponse {
@@ -22,8 +22,8 @@ public class OrderEventsResponse {
 
     /**
      * 【職責】單一事件項目：類型、風控碼、拒絕原因與載荷。
-     * 【技巧】靜態巢狀類，與外層共用序列化邊界。
-     * 【概念】把「一筆事件」從 Entity 投影成 API 友善結構，避免直接暴露 JPA 實體。
+     * <p>【技巧】靜態巢狀類，與外層共用序列化邊界。
+     * <p>【概念】把「一筆事件」從 Entity 投影成 API 友善結構，避免直接暴露 JPA 實體。
      */
     @Data
     public static class EventItem {

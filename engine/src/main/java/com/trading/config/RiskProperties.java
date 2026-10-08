@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 
 /**
  * 【職責】綁定風控規則閾值（持倉／曝險／重複單／波動／過度交易／部分成交等）。
- * 【技巧】{@code @ConfigurationProperties(prefix = "trading.risk")}；{@link BigDecimal} 避免浮點誤差。
- * 【概念】規則邏輯在 {@link com.trading.application.RiskService}，數值外置後可依環境調參而不改碼。
- * 【邊界】只提供設定；不執行風控判斷。正式環境請用設定檔／環境變數覆寫預設值。
+ * <p>【技巧】{@code @ConfigurationProperties(prefix = "trading.risk")}；{@link BigDecimal} 避免浮點誤差。
+ * <p>【概念】規則邏輯在 {@link com.trading.application.RiskService}，數值外置後可依環境調參而不改碼。
+ * <p>【邊界】只提供設定；不執行風控判斷。正式環境請用設定檔／環境變數覆寫預設值。
  */
 @Getter
 @Setter

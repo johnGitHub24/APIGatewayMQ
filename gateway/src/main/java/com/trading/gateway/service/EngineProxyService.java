@@ -15,11 +15,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 【職責】將 Gateway 收到的 HTTP 請求同步轉發到後端 Engine（查詢／成交／取消等代理路徑）。
- * 【技巧】每個 Engine URI 一個 {@link WebClient}；{@link AtomicInteger} + {@code floorMod} 做無鎖 round-robin；
- *         {@code exchangeToMono} 保留下游狀態碼與 headers，body 以 {@code byte[]} 透傳。
- * 【概念】與 Kafka 非同步下單互補：需要「立刻拿到 Engine HTTP 回應」的操作走此服務；
- *         寫入削峰走 MQ，讀取／狀態變更可走代理，避免 Gateway 自己實作訂單狀態機。
- * 【邊界】不解析業務 JSON、不做風控；僅轉發。Engine 清單來自 {@link GatewayProperties#getEngineUris()}。
+ * <p>【技巧】每個 Engine URI 一個 {@link WebClient}；{@link AtomicInteger} + {@code floorMod} 做無鎖 round-robin；
+ * <br>{@code exchangeToMono} 保留下游狀態碼與 headers，body 以 {@code byte[]} 透傳。
+ * <p>【概念】與 Kafka 非同步下單互補：需要「立刻拿到 Engine HTTP 回應」的操作走此服務；
+ * <br>寫入削峰走 MQ，讀取／狀態變更可走代理，避免 Gateway 自己實作訂單狀態機。
+ * <p>【邊界】不解析業務 JSON、不做風控；僅轉發。Engine 清單來自 {@link GatewayProperties#getEngineUris()}。
  */
 @Service
 public class EngineProxyService {
@@ -32,8 +32,8 @@ public class EngineProxyService {
 
     /**
      * 【職責】依設定為每個 Engine URI 建立專用 {@link WebClient}。
-     * 【技巧】{@code stream().map(baseUrl -> builder.baseUrl(baseUrl).build()).toList()}。
-     * 【概念】啟動時建好 client，請求路徑只做選節點與送出，避免每次 new 連線設定。
+     * <p>【技巧】{@code stream().map(baseUrl -> builder.baseUrl(baseUrl).build()).toList()}。
+     * <p>【概念】啟動時建好 client，請求路徑只做選節點與送出，避免每次 new 連線設定。
      *
      * @param properties       內含 engineUris
      * @param webClientBuilder 由 {@link com.trading.gateway.config.WebClientConfig} 提供
@@ -46,10 +46,10 @@ public class EngineProxyService {
 
     /**
      * 【職責】將請求原樣轉發到選中的 Engine，回傳狀態碼與位元組本文。
-     * 【技巧】WebFlux {@link Mono}；有 body 且方法允許時用 {@link BodyInserters#fromValue}；
-     *         {@code defaultIfEmpty(new byte[0])} 處理空回應。
-     * 【概念】回傳 {@code byte[]} 而非強型別 DTO，讓 Gateway 當「透明代理」，不必跟 Engine API 欄位耦合。
-     * 【邊界】{@code clients} 為空時回 {@link Mono#error}；不重試失敗節點（可日後加）。
+     * <p>【技巧】WebFlux {@link Mono}；有 body 且方法允許時用 {@link BodyInserters#fromValue}；
+     * <br>{@code defaultIfEmpty(new byte[0])} 處理空回應。
+     * <p>【概念】回傳 {@code byte[]} 而非強型別 DTO，讓 Gateway 當「透明代理」，不必跟 Engine API 欄位耦合。
+     * <p>【邊界】{@code clients} 為空時回 {@link Mono#error}；不重試失敗節點（可日後加）。
      *
      * @param method          HTTP 方法
      * @param path            應用內路徑

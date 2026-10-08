@@ -9,9 +9,9 @@ import java.util.List;
 
 /**
  * 【職責】成交紀錄持久化存取：依訂單 ID 查關聯成交（列表或分頁）。
- * 【技巧】Spring Data JPA；同名方法以回傳型別區分 List／Page。
- * 【概念】查單展開成交用 List；成交列表 API 用 Page 做分頁保護。
- * 【邊界】不含撮合或持倉更新。
+ * <p>【技巧】Spring Data JPA；同名方法以回傳型別區分 List／Page。
+ * <p>【概念】查單展開成交用 List；成交列表 API 用 Page 做分頁保護。
+ * <p>【邊界】不含撮合或持倉更新。
  */
 public interface TradeRepository extends JpaRepository<TradeEntity, Long> {
 

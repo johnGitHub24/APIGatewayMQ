@@ -30,8 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 【職責】保護成交查詢 API Happy 與 404。
- * 【技巧】{@code @WebMvcTest} + {@link GlobalExceptionHandler}。
- * 【概念】成交列表走分頁；單筆找不到必須是穩定 404 契約。
+ * <p>【技巧】{@code @WebMvcTest} + {@link GlobalExceptionHandler}。
+ * <p>【概念】成交列表走分頁；單筆找不到必須是穩定 404 契約。
  */
 @Tag("unit")
 @WebMvcTest(controllers = TradeController.class)

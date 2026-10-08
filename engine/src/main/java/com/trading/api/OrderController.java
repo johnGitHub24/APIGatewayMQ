@@ -21,11 +21,11 @@ import java.util.List;
 
 /**
  * 【職責】訂單 REST API 入口：下單、查詢、取消、事件時間軸與教學用手動成交。
- * 【技巧】{@code @RestController} + {@code /api/v1/orders}；{@code @Valid} 驗證 body；
- *         {@code Idempotency-Key} 標頭；{@link ServletUriComponentsBuilder} 組 201 Location。
- * 【概念】Controller 只做「收參數 → 轉交 Service → 組 HTTP」；風控、狀態機、持倉更新都在
- *         {@link TradingService}。冪等鍵避免網路重送造成重複下單。
- * 【邊界】不直接 {@code save}/{@code delete} Domain、不寫風控規則；查事件目前讀 Repository（薄查詢）。
+ * <p>【技巧】{@code @RestController} + {@code /api/v1/orders}；{@code @Valid} 驗證 body；
+ * <br>{@code Idempotency-Key} 標頭；{@link ServletUriComponentsBuilder} 組 201 Location。
+ * <p>【概念】Controller 只做「收參數 → 轉交 Service → 組 HTTP」；風控、狀態機、持倉更新都在
+ * <br>{@link TradingService}。冪等鍵避免網路重送造成重複下單。
+ * <p>【邊界】不直接 {@code save}/{@code delete} Domain、不寫風控規則；查事件目前讀 Repository（薄查詢）。
  */
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -49,9 +49,9 @@ public class OrderController {
 
     /**
      * 【職責】建立新訂單（同步下單路徑）。
-     * 【技巧】{@code @RequestBody @Valid}；可選 {@code Idempotency-Key}；{@code ResponseEntity.created(location)}。
-     * 【概念】201 + Location 是 REST 慣例：告訴客戶端「資源已建立，去這個 URI 查」。
-     *         相同冪等鍵重送應回既有訂單，而非再開一筆。
+     * <p>【技巧】{@code @RequestBody @Valid}；可選 {@code Idempotency-Key}；{@code ResponseEntity.created(location)}。
+     * <p>【概念】201 + Location 是 REST 慣例：告訴客戶端「資源已建立，去這個 URI 查」。
+     * <br>相同冪等鍵重送應回既有訂單，而非再開一筆。
      * @param request        下單請求（symbol、side、quantity、price 等）
      * @param idempotencyKey 可選冪等鍵；相同鍵重送時回傳既有訂單
      * @return HTTP 201，body 為訂單回應
@@ -70,8 +70,8 @@ public class OrderController {
 
     /**
      * 【職責】查詢單筆訂單，並附帶該訂單的成交明細。
-     * 【技巧】{@code orderMapper.toResponse} + Stream 映射 trades。
-     * 【概念】訂單是「意圖」，成交是「實際發生」；一筆訂單可對應多筆部分成交。
+     * <p>【技巧】{@code orderMapper.toResponse} + Stream 映射 trades。
+     * <p>【概念】訂單是「意圖」，成交是「實際發生」；一筆訂單可對應多筆部分成交。
      * @param orderId 訂單主鍵
      * @return 含 trades 的訂單回應
      */
@@ -86,8 +86,8 @@ public class OrderController {
 
     /**
      * 【職責】分頁列出訂單，可依標的與狀態過濾。
-     * 【技巧】{@link PageRequest}；{@code Math.min/max} 夾住 size；組裝 {@link PagedResponse}。
-     * 【概念】分頁避免一次回傳全表；size 上限 100 是防濫用的常見保護。
+     * <p>【技巧】{@link PageRequest}；{@code Math.min/max} 夾住 size；組裝 {@link PagedResponse}。
+     * <p>【概念】分頁避免一次回傳全表；size 上限 100 是防濫用的常見保護。
      * @param symbol 可選標的
      * @param status 可選狀態
      * @param page   頁碼（從 0）
@@ -112,8 +112,8 @@ public class OrderController {
 
     /**
      * 【職責】查詢訂單事件時間軸（建立、風控、成交、取消等）。
-     * 【技巧】先 {@code getById} 確認存在；再依 {@code createdAt} 升序取事件。
-     * 【概念】事件表是審計軌跡：事後可回答「這張單何時被拒、被誰規則擋」。
+     * <p>【技巧】先 {@code getById} 確認存在；再依 {@code createdAt} 升序取事件。
+     * <p>【概念】事件表是審計軌跡：事後可回答「這張單何時被拒、被誰規則擋」。
      * @param orderId 訂單主鍵
      * @return 事件列表回應
      */
@@ -126,9 +126,9 @@ public class OrderController {
 
     /**
      * 【職責】手動觸發剩餘成交流程（模擬撮合），供教學與整合測試。
-     * 【技巧】委派 {@link TradingService#completeFill(Long)}。
-     * 【概念】真實交易所由撮合引擎推送；此處用 API 模擬「補足部分成交」。
-     * 【邊界】僅適用 PARTIALLY_FILLED；其他狀態由 Service 拋狀態例外。
+     * <p>【技巧】委派 {@link TradingService#completeFill(Long)}。
+     * <p>【概念】真實交易所由撮合引擎推送；此處用 API 模擬「補足部分成交」。
+     * <p>【邊界】僅適用 PARTIALLY_FILLED；其他狀態由 Service 拋狀態例外。
      * @param orderId 待補成交的訂單主鍵
      * @return 更新後訂單回應
      */
@@ -139,8 +139,8 @@ public class OrderController {
 
     /**
      * 【職責】取消尚未完全成交的訂單。
-     * 【技巧】{@code @PatchMapping} 表示部分更新狀態；委派 {@link TradingService#cancelOrder}。
-     * 【概念】已 FILLED／REJECTED 等終態不可取消——狀態機由 Service 守護。
+     * <p>【技巧】{@code @PatchMapping} 表示部分更新狀態；委派 {@link TradingService#cancelOrder}。
+     * <p>【概念】已 FILLED／REJECTED 等終態不可取消——狀態機由 Service 守護。
      * @param orderId 要取消的訂單主鍵
      * @return 取消後訂單回應
      */

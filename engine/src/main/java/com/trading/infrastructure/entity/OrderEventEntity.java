@@ -10,9 +10,9 @@ import java.time.OffsetDateTime;
 
 /**
  * 【職責】映射 {@code order_events}：記錄訂單生命週期中的每個事件（稽核時間軸）。
- * 【技巧】JPA Entity；以 {@code order_id} 關聯訂單；{@link OrderEventType} 以 STRING 存。
- * 【概念】狀態是當下快照，事件是過程軌跡；兩者並存才能回答「為何變成 REJECTED」。
- * 【邊界】不負責事件語意編排；由應用層在狀態變更時寫入。
+ * <p>【技巧】JPA Entity；以 {@code order_id} 關聯訂單；{@link OrderEventType} 以 STRING 存。
+ * <p>【概念】狀態是當下快照，事件是過程軌跡；兩者並存才能回答「為何變成 REJECTED」。
+ * <p>【邊界】不負責事件語意編排；由應用層在狀態變更時寫入。
  */
 @Getter
 @Setter

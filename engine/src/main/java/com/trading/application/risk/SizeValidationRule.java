@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 
 /**
  * 【職責】R003 基礎欄位驗證：quantity／price 必須存在且大於 0。
- * 【技巧】{@code @Order(1)} 最先執行；{@code compareTo(ZERO) <= 0} 擋非法值。
- * 【概念】先擋壞資料，後面規則才不會用 null／負數做曝險投影。
- * 【邊界】不做業務上限（那是持倉／曝險規則）；只做「基本合法」。
+ * <p>【技巧】{@code @Order(1)} 最先執行；{@code compareTo(ZERO) <= 0} 擋非法值。
+ * <p>【概念】先擋壞資料，後面規則才不會用 null／負數做曝險投影。
+ * <p>【邊界】不做業務上限（那是持倉／曝險規則）；只做「基本合法」。
  */
 @Component
 @Order(1)
@@ -25,8 +25,8 @@ public class SizeValidationRule implements RiskRule {
 
     /**
      * 【職責】驗證 quantity／price 非 null 且大於零。
-     * 【技巧】短路條件一次檢查四種非法情況。
-     * 【概念】風控鏈的第一道門：格式／基本語意不過，後面規則免談。
+     * <p>【技巧】短路條件一次檢查四種非法情況。
+     * <p>【概念】風控鏈的第一道門：格式／基本語意不過，後面規則免談。
      * @param context 訂單上下文
      * @param market  市場情境（本規則未使用）
      * @return 非法則拒絕，否則放行

@@ -17,9 +17,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * 【職責】Kafka 下單指令消費者：把 MQ 訊息轉交 {@link TradingService} 執行。
- * 【技巧】{@code @KafkaListener} + {@code containerFactory}；{@code @Payload}/{@code @Header} 取本體與 partition／offset。
- * 【概念】Gateway 發到 {@link Topics#ORDER_COMMANDS} 後快速回 202；真正風控與落庫在此消化——這是削峰的「後端」。
- * 【邊界】不組裝 HTTP 回應；業務拒單不進 DLQ，基礎設施錯誤才寫 {@link FailedCommandService}。
+ * <p>【技巧】{@code @KafkaListener} + {@code containerFactory}；{@code @Payload}/{@code @Header} 取本體與 partition／offset。
+ * <p>【概念】Gateway 發到 {@link Topics#ORDER_COMMANDS} 後快速回 202；真正風控與落庫在此消化——這是削峰的「後端」。
+ * <p>【邊界】不組裝 HTTP 回應；業務拒單不進 DLQ，基礎設施錯誤才寫 {@link FailedCommandService}。
  */
 @Component
 @RequiredArgsConstructor
@@ -33,9 +33,9 @@ public class OrderCommandConsumer {
 
     /**
      * 【職責】消費一筆下單指令並委派業務處理；失敗時分流業務拒單 vs 基礎設施錯誤。
-     * 【技巧】MQ DTO → {@link CreateOrderRequest}；{@code try/catch} 區分 {@link RiskRejectedException} 與一般 Exception。
-     * 【概念】風控拒絕＝「訊息已正確處理完（結果是拒）」；DB 掛掉＝「還沒處理好，應進 DLQ 稍後重試」。
-     *         兩者若不區分，會把合法拒單反覆重試，造成噪音與重複拒單紀錄。
+     * <p>【技巧】MQ DTO → {@link CreateOrderRequest}；{@code try/catch} 區分 {@link RiskRejectedException} 與一般 Exception。
+     * <p>【概念】風控拒絕＝「訊息已正確處理完（結果是拒）」；DB 掛掉＝「還沒處理好，應進 DLQ 稍後重試」。
+     * <br>兩者若不區分，會把合法拒單反覆重試，造成噪音與重複拒單紀錄。
      * @param command   Kafka 訊息本體
      * @param partition 來源 partition（日誌用）
      * @param offset    來源 offset（日誌用）

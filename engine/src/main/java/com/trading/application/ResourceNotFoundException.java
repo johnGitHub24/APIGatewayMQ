@@ -2,9 +2,9 @@ package com.trading.application;
 
 /**
  * 【職責】資源不存在例外：查訂單／成交／持倉找不到對應資料。
- * 【技巧】攜帶 {@code errorCode}；通常由全域處理器對應 HTTP 404。
- * 【概念】業務層用明確例外表達「沒有這個資源」，比回 Optional 一路傳到 Controller 更一致。
- * 【邊界】不組裝錯誤 JSON body。
+ * <p>【技巧】攜帶 {@code errorCode}；通常由全域處理器對應 HTTP 404。
+ * <p>【概念】業務層用明確例外表達「沒有這個資源」，比回 Optional 一路傳到 Controller 更一致。
+ * <p>【邊界】不組裝錯誤 JSON body。
  */
 public class ResourceNotFoundException extends RuntimeException {
 

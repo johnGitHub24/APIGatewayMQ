@@ -6,17 +6,17 @@ import java.math.BigDecimal;
 
 /**
  * 【職責】未實現損益純計算：數量 ×（標記價 − 均價）。
- * 【技巧】無狀態 {@code @Component}；null 輸入回 {@link BigDecimal#ZERO}。
- * 【概念】把公式抽成獨立類，方便單測與被持倉服務重用，不必綁 DB。
- * 【邊界】不讀寫資料庫、不決定 markPrice 來源。
+ * <p>【技巧】無狀態 {@code @Component}；null 輸入回 {@link BigDecimal#ZERO}。
+ * <p>【概念】把公式抽成獨立類，方便單測與被持倉服務重用，不必綁 DB。
+ * <p>【邊界】不讀寫資料庫、不決定 markPrice 來源。
  */
 @Component
 public class PnLCalculator {
 
     /**
      * 【職責】依持倉數量、均價與標記價計算未實現損益。
-     * 【技巧】{@code quantity.multiply(markPrice.subtract(avgPrice))}。
-     * 【概念】多頭：市價高於成本為正；空頭數量為負時符號自然反映。
+     * <p>【技巧】{@code quantity.multiply(markPrice.subtract(avgPrice))}。
+     * <p>【概念】多頭：市價高於成本為正；空頭數量為負時符號自然反映。
      * @param quantity  持倉數量（可為負表示空）
      * @param avgPrice  平均成本
      * @param markPrice 標記／市價

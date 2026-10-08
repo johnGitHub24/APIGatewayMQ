@@ -18,9 +18,9 @@ import java.util.List;
 
 /**
  * 【職責】JOB-C：失敗下單指令的持久化 DLQ 寫入、定時重試與查詢。
- * 【技巧】{@code Propagation.REQUIRES_NEW} 獨立交易寫失敗列；批次掃描 PENDING + {@code nextRetryAt}；指數式 backoff。
- * 【概念】Kafka 消費當下若 DB 掛掉，訊息可能已 commit；把指令存表才能「稍後再試」而不丟單。
- * 【邊界】業務拒單視為成功結案不重試；達 maxAttempts 標 DEAD。不負責 cron 觸發。
+ * <p>【技巧】{@code Propagation.REQUIRES_NEW} 獨立交易寫失敗列；批次掃描 PENDING + {@code nextRetryAt}；指數式 backoff。
+ * <p>【概念】Kafka 消費當下若 DB 掛掉，訊息可能已 commit；把指令存表才能「稍後再試」而不丟單。
+ * <p>【邊界】業務拒單視為成功結案不重試；達 maxAttempts 標 DEAD。不負責 cron 觸發。
  */
 @Service
 @Slf4j
@@ -41,8 +41,8 @@ public class FailedCommandService {
 
     /**
      * 【職責】記錄一筆失敗指令供後續重試。
-     * 【技巧】{@code REQUIRES_NEW}：即使外層交易 rollback，此列仍提交。
-     * 【概念】Consumer 捕捉基礎設施例外後呼叫；reason 截斷避免欄位過長。
+     * <p>【技巧】{@code REQUIRES_NEW}：即使外層交易 rollback，此列仍提交。
+     * <p>【概念】Consumer 捕捉基礎設施例外後呼叫；reason 截斷避免欄位過長。
      * @param command 原始 Kafka 指令
      * @param reason  失敗原因摘要
      * @return 已持久化的失敗指令實體
@@ -67,8 +67,8 @@ public class FailedCommandService {
 
     /**
      * 【職責】掃描到期的失敗指令並重試下單。
-     * 【技巧】{@link PageRequest} 限批次；成功／風控拒 → SUCCEEDED；其他失敗則加 attempts 與 nextRetryAt。
-     * 【概念】風控拒絕代表「已正確處理」，標成功避免無限重試；基礎設施錯誤才繼續 backoff。
+     * <p>【技巧】{@link PageRequest} 限批次；成功／風控拒 → SUCCEEDED；其他失敗則加 attempts 與 nextRetryAt。
+     * <p>【概念】風控拒絕代表「已正確處理」，標成功避免無限重試；基礎設施錯誤才繼續 backoff。
      * @return 本次成功重投的筆數（不含風控拒但標 SUCCEEDED 的語意計數以程式為準）
      */
     @Transactional
@@ -112,8 +112,8 @@ public class FailedCommandService {
 
     /**
      * 【職責】依狀態查詢失敗指令（有上限，避免無界查詢）。
-     * 【技巧】{@code @Transactional(readOnly = true)}；null status 時取最近一頁全部。
-     * 【概念】維運 API 需要「看佇列」；永遠帶 limit，避免一次撈爆。
+     * <p>【技巧】{@code @Transactional(readOnly = true)}；null status 時取最近一頁全部。
+     * <p>【概念】維運 API 需要「看佇列」；永遠帶 limit，避免一次撈爆。
      * @param status 可選；{@code null} 時回傳最近一頁全部
      * @return 失敗指令列表
      */

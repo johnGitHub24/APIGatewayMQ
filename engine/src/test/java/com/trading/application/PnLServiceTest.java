@@ -17,8 +17,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * 【職責】保護 {@link PnLService#getSummary()} 彙總未實現損益。
- * 【技巧】Mock {@link PositionService#findAll()} 提供兩筆持倉。
- * 【概念】API 要的是帳戶視角加總，公式已存在持倉列上。
+ * <p>【技巧】Mock {@link PositionService#findAll()} 提供兩筆持倉。
+ * <p>【概念】API 要的是帳戶視角加總，公式已存在持倉列上。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

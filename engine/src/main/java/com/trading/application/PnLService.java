@@ -11,9 +11,9 @@ import java.util.List;
 
 /**
  * 【職責】損益彙總：讀取全部持倉，組裝總未實現與分項明細。
- * 【技巧】Stream {@code map}/{@code reduce} 加總；組 {@link PnLResponse}。
- * 【概念】API 要的是「帳戶視角摘要」，不是單一持倉列——在此聚合一次。
- * 【邊界】不重算公式（用持倉上已存的 unrealizedPnl）；不寫快照。
+ * <p>【技巧】Stream {@code map}/{@code reduce} 加總；組 {@link PnLResponse}。
+ * <p>【概念】API 要的是「帳戶視角摘要」，不是單一持倉列——在此聚合一次。
+ * <p>【邊界】不重算公式（用持倉上已存的 unrealizedPnl）；不寫快照。
  */
 @Service
 public class PnLService {
@@ -27,8 +27,8 @@ public class PnLService {
 
     /**
      * 【職責】回傳總未實現 PnL 與各商品明細。
-     * 【技巧】{@code @Transactional(readOnly = true)}；{@code reduce(ZERO, BigDecimal::add)}。
-     * 【概念】{@code asOf} 標示計算時點，避免報表誤以為是歷史結算值。
+     * <p>【技巧】{@code @Transactional(readOnly = true)}；{@code reduce(ZERO, BigDecimal::add)}。
+     * <p>【概念】{@code asOf} 標示計算時點，避免報表誤以為是歷史結算值。
      * @return 損益摘要回應
      */
     @Transactional(readOnly = true)

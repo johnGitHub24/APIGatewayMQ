@@ -7,9 +7,9 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * 【職責】綁定背景排程（JOB-A～D）的啟用、cron、批次大小與保留天數等設定。
- * 【技巧】{@code @ConfigurationProperties(prefix = "trading.job")} + 巢狀靜態類對應 YAML 階層。
- * 【概念】排程參數外置後，正式環境可用環境變數／設定檔覆寫，不必改程式重編。
- * 【邊界】只承載設定值；實際觸發與業務邏輯在 Job／Service。
+ * <p>【技巧】{@code @ConfigurationProperties(prefix = "trading.job")} + 巢狀靜態類對應 YAML 階層。
+ * <p>【概念】排程參數外置後，正式環境可用環境變數／設定檔覆寫，不必改程式重編。
+ * <p>【邊界】只承載設定值；實際觸發與業務邏輯在 Job／Service。
  */
 @Getter
 @Setter
@@ -28,8 +28,8 @@ public class JobProperties {
 
     /**
      * 【職責】JOB-A 設定：掃描並取消長時間未成交的訂單。
-     * 【技巧】巢狀 Properties 類，對應 {@code trading.job.stale-order.*}。
-     * 【概念】逾時取消避免掛單無限占用風控額度；timeout／batchSize 決定掃描節奏與負載。
+     * <p>【技巧】巢狀 Properties 類，對應 {@code trading.job.stale-order.*}。
+     * <p>【概念】逾時取消避免掛單無限占用風控額度；timeout／batchSize 決定掃描節奏與負載。
      */
     @Getter
     @Setter
@@ -46,8 +46,8 @@ public class JobProperties {
 
     /**
      * 【職責】JOB-B 設定：日終寫入各標的 PnL 快照。
-     * 【技巧】巢狀 Properties，對應 {@code trading.job.pnl-snapshot.*}。
-     * 【概念】快照把「當下持倉損益」固化成歷史點，報表不必重算整段成交。
+     * <p>【技巧】巢狀 Properties，對應 {@code trading.job.pnl-snapshot.*}。
+     * <p>【概念】快照把「當下持倉損益」固化成歷史點，報表不必重算整段成交。
      */
     @Getter
     @Setter
@@ -60,8 +60,8 @@ public class JobProperties {
 
     /**
      * 【職責】JOB-C 設定：自動重試 DLQ 中的失敗命令。
-     * 【技巧】巢狀 Properties；maxAttempts／backoffSeconds 控制重試上限與退避。
-     * 【概念】MQ 消費失敗不應立刻放棄；有限次重試 + DEAD 標記，兼顧自動恢復與人工介入。
+     * <p>【技巧】巢狀 Properties；maxAttempts／backoffSeconds 控制重試上限與退避。
+     * <p>【概念】MQ 消費失敗不應立刻放棄；有限次重試 + DEAD 標記，兼顧自動恢復與人工介入。
      */
     @Getter
     @Setter
@@ -80,8 +80,8 @@ public class JobProperties {
 
     /**
      * 【職責】JOB-D 設定：清理過期訂單事件與死信紀錄。
-     * 【技巧】巢狀 Properties；retentionDays + batchSize 控制刪除範圍與單次負載。
-     * 【概念】事件／DLQ 會持續成長；定期清理避免表膨脹，同時保留足夠稽核窗口。
+     * <p>【技巧】巢狀 Properties；retentionDays + batchSize 控制刪除範圍與單次負載。
+     * <p>【概念】事件／DLQ 會持續成長；定期清理避免表膨脹，同時保留足夠稽核窗口。
      */
     @Getter
     @Setter

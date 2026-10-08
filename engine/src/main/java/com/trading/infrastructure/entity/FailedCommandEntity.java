@@ -13,9 +13,9 @@ import java.time.OffsetDateTime;
 
 /**
  * 【職責】映射 {@code failed_commands}：Kafka 下單指令失敗後的持久化重試佇列。
- * 【技巧】JPA {@code @Entity}；{@code @Enumerated(STRING)} 存狀態／方向；Hibernate 時間戳註解。
- * 【概念】削峰消費失敗時不能只丟 log；落地原始指令 + attempts／nextRetryAt，JOB-C 才能自動重試。
- * 【邊界】不含重試業務邏輯；只存欄位。狀態語意見 {@link FailedCommandStatus}。
+ * <p>【技巧】JPA {@code @Entity}；{@code @Enumerated(STRING)} 存狀態／方向；Hibernate 時間戳註解。
+ * <p>【概念】削峰消費失敗時不能只丟 log；落地原始指令 + attempts／nextRetryAt，JOB-C 才能自動重試。
+ * <p>【邊界】不含重試業務邏輯；只存欄位。狀態語意見 {@link FailedCommandStatus}。
  */
 @Getter
 @Setter

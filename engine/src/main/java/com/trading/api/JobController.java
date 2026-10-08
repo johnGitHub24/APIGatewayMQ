@@ -18,11 +18,11 @@ import java.util.List;
 
 /**
  * 【職責】排程 Job 的手動觸發與輸出查詢 REST 入口（JOB-A～D），供監控／維運與 Swagger 文件使用。
- * 【技巧】{@code @RestController} + {@code @RequestMapping("/api/v1")}；{@code @Operation}/{@code @Tag} 產生 OpenAPI；
- *         委派對應 Service，以 {@link JobRunResponse#of} 組裝執行摘要。
- * 【概念】排程通常由 cron 自動跑；此 Controller 讓人「手動再跑一次」方便除錯與 Demo，
- *         本身不含清理／重試邏輯——那是 Service／Job 的事。
- * 【邊界】不實作 Job 商業邏輯、不直接操作 Repository；只轉交與組 HTTP 回應。
+ * <p>【技巧】{@code @RestController} + {@code @RequestMapping("/api/v1")}；{@code @Operation}/{@code @Tag} 產生 OpenAPI；
+ * <br>委派對應 Service，以 {@link JobRunResponse#of} 組裝執行摘要。
+ * <p>【概念】排程通常由 cron 自動跑；此 Controller 讓人「手動再跑一次」方便除錯與 Demo，
+ * <br>本身不含清理／重試邏輯——那是 Service／Job 的事。
+ * <p>【邊界】不實作 Job 商業邏輯、不直接操作 Repository；只轉交與組 HTTP 回應。
  */
 @Tag(name = "Jobs", description = "排程 Job（JOB-A 超時取消 / JOB-B PnL 快照 / JOB-C 失敗重試 / JOB-D 資料清理）")
 @RestController
@@ -47,8 +47,8 @@ public class JobController {
 
     /**
      * 【職責】手動執行 JOB-A：取消逾時未成交訂單。
-     * 【技巧】{@code @PostMapping}；呼叫 {@link StaleOrderCancellationService#cancelStaleOrders()} 後包成 {@link JobRunResponse}。
-     * 【概念】回傳「影響筆數」讓維運一眼知道這次跑了多少；真正取消條件在 Service。
+     * <p>【技巧】{@code @PostMapping}；呼叫 {@link StaleOrderCancellationService#cancelStaleOrders()} 後包成 {@link JobRunResponse}。
+     * <p>【概念】回傳「影響筆數」讓維運一眼知道這次跑了多少；真正取消條件在 Service。
      * @return 含 job 代碼、影響筆數與說明的執行摘要
      */
     @Operation(summary = "JOB-A 手動執行：取消逾時未成交訂單")
@@ -60,8 +60,8 @@ public class JobController {
 
     /**
      * 【職責】手動執行 JOB-B：建立當日 PnL／持倉結算快照。
-     * 【技巧】委派 {@link PnlSnapshotService#captureSnapshot()}。
-     * 【概念】快照是「當下持倉的凍結影像」，方便日後對帳；重跑應具冪等（同日同標的不重複寫）。
+     * <p>【技巧】委派 {@link PnlSnapshotService#captureSnapshot()}。
+     * <p>【概念】快照是「當下持倉的凍結影像」，方便日後對帳；重跑應具冪等（同日同標的不重複寫）。
      * @return 本次寫入快照筆數摘要
      */
     @Operation(summary = "JOB-B 手動執行：建立當日 PnL/持倉結算快照")
@@ -73,8 +73,8 @@ public class JobController {
 
     /**
      * 【職責】手動執行 JOB-C：重試失敗的下單指令。
-     * 【技巧】委派 {@link FailedCommandService#retryFailedCommands()}。
-     * 【概念】基礎設施失敗會進 DLQ；此端點等同「現在立刻再試」，不必等下一個 cron。
+     * <p>【技巧】委派 {@link FailedCommandService#retryFailedCommands()}。
+     * <p>【概念】基礎設施失敗會進 DLQ；此端點等同「現在立刻再試」，不必等下一個 cron。
      * @return 本次成功重投筆數摘要
      */
     @Operation(summary = "JOB-C 手動執行：重試失敗的下單指令")
@@ -86,8 +86,8 @@ public class JobController {
 
     /**
      * 【職責】手動執行 JOB-D：清理過期審計事件與失敗指令。
-     * 【技巧】讀取 {@link DataCleanupService.CleanupResult} record 組裝 detail 字串。
-     * 【概念】保留期過了的事件／已終結指令可刪，避免表無限成長；刪除策略在 Service。
+     * <p>【技巧】讀取 {@link DataCleanupService.CleanupResult} record 組裝 detail 字串。
+     * <p>【概念】保留期過了的事件／已終結指令可刪，避免表無限成長；刪除策略在 Service。
      * @return 刪除總筆數與分項說明
      */
     @Operation(summary = "JOB-D 手動執行：清理過期審計事件與失敗指令")
@@ -101,8 +101,8 @@ public class JobController {
 
     /**
      * 【職責】查詢 PnL 結算快照（JOB-B 輸出）。
-     * 【技巧】{@code @DateTimeFormat(iso = DATE)} 解析可選日期；Stream {@code map} 轉 DTO。
-     * 【概念】未指定日期＝今日，方便 Dashboard 預設看「今天結算」。
+     * <p>【技巧】{@code @DateTimeFormat(iso = DATE)} 解析可選日期；Stream {@code map} 轉 DTO。
+     * <p>【概念】未指定日期＝今日，方便 Dashboard 預設看「今天結算」。
      * @param date 可選結算日（yyyy-MM-dd）；null 時用今日
      * @return 該日快照列表
      */
@@ -118,8 +118,8 @@ public class JobController {
 
     /**
      * 【職責】查詢失敗指令 DLQ（JOB-C 佇列），可依狀態過濾。
-     * 【技巧】可選 {@link FailedCommandStatus} query param；Stream 映射為 {@link FailedCommandResponse}。
-     * 【概念】PENDING／SUCCEEDED／DEAD 讓維運分辨「還會重試／已成功／已放棄」。
+     * <p>【技巧】可選 {@link FailedCommandStatus} query param；Stream 映射為 {@link FailedCommandResponse}。
+     * <p>【概念】PENDING／SUCCEEDED／DEAD 讓維運分辨「還會重試／已成功／已放棄」。
      * @param status 可選狀態過濾；null 表示不限
      * @return 失敗指令列表（有上限，見 Service）
      */

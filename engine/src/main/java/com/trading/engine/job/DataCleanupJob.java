@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * 【職責】JOB-D 排程觸發器：定時清理過期審計事件與已終結失敗指令。
- * 【技巧】{@code @Scheduled(cron)}；{@code @ConditionalOnProperty} 可關閉；例外只記 log。
- * 【概念】Job 類只負責「何時跑」；「刪什麼、保留幾天」在 {@link DataCleanupService}。
- * 【邊界】不實作刪除 SQL；失敗不向上拋，避免中斷排程執行緒。
+ * <p>【技巧】{@code @Scheduled(cron)}；{@code @ConditionalOnProperty} 可關閉；例外只記 log。
+ * <p>【概念】Job 類只負責「何時跑」；「刪什麼、保留幾天」在 {@link DataCleanupService}。
+ * <p>【邊界】不實作刪除 SQL；失敗不向上拋，避免中斷排程執行緒。
  */
 @Component
 @ConditionalOnProperty(name = "trading.job.cleanup.enabled", havingValue = "true", matchIfMissing = true)
@@ -26,8 +26,8 @@ public class DataCleanupJob {
 
     /**
      * 【職責】cron 觸發後委派 {@link DataCleanupService#cleanup()}。
-     * 【技巧】{@code try/catch} 吞掉例外並 {@code log.error}。
-     * 【概念】排程執行緒若因未捕捉例外而死，後續觸發會停——故 Job 入口必須防禦性記錄。
+     * <p>【技巧】{@code try/catch} 吞掉例外並 {@code log.error}。
+     * <p>【概念】排程執行緒若因未捕捉例外而死，後續觸發會停——故 Job 入口必須防禦性記錄。
      */
     @Scheduled(cron = "${trading.job.cleanup.cron}")
     public void run() {

@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 【職責】依 {@code clientOrderId} 查單筆訂單，供 Gateway／外部系統做冪等追蹤。
- * 【技巧】{@code @GetMapping(params = "clientOrderId")} 用 query 參數區分路由；
- *         {@code Optional.map/orElseThrow} 轉 DTO 或 404 例外。
- * 【概念】客戶端訂單 ID 是跨系統的「業務鍵」；Gateway 常先拿它問 Engine「這筆有沒有了」。
- * 【邊界】不經 {@link OrderService} 狀態流轉；只讀 Repository。不負責下單／取消。
+ * <p>【技巧】{@code @GetMapping(params = "clientOrderId")} 用 query 參數區分路由；
+ * <br>{@code Optional.map/orElseThrow} 轉 DTO 或 404 例外。
+ * <p>【概念】客戶端訂單 ID 是跨系統的「業務鍵」；Gateway 常先拿它問 Engine「這筆有沒有了」。
+ * <p>【邊界】不經 {@link OrderService} 狀態流轉；只讀 Repository。不負責下單／取消。
  */
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -33,8 +33,8 @@ public class OrderLookupController {
 
     /**
      * 【職責】依客戶端訂單 ID 查詢單筆訂單。
-     * 【技巧】Repository {@code findByClientOrderId} + Mapper；找不到拋 {@link ResourceNotFoundException}。
-     * 【概念】與路徑 {@code /{orderId}} 互補：一個用內部主鍵，一個用外部冪等鍵。
+     * <p>【技巧】Repository {@code findByClientOrderId} + Mapper；找不到拋 {@link ResourceNotFoundException}。
+     * <p>【概念】與路徑 {@code /{orderId}} 互補：一個用內部主鍵，一個用外部冪等鍵。
      * @param clientOrderId 客戶端／冪等訂單識別
      * @return 訂單回應
      */

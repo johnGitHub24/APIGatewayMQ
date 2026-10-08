@@ -17,9 +17,9 @@ import java.util.Map;
 
 /**
  * 【職責】Kafka 生產者 Spring 設定：ObjectMapper、序列化與 {@link KafkaTemplate}。
- * 【技巧】{@link JavaTimeModule}；{@link JsonSerializer}（關閉 type info）；{@link DefaultKafkaProducerFactory}。
- * 【概念】Engine 也可發事件／回覆；與 Consumer 共用同一套 JSON 時間格式，避免反序列化失敗。
- * 【邊界】不決定 topic／業務 payload；發送由呼叫端注入 {@link KafkaTemplate} 完成。
+ * <p>【技巧】{@link JavaTimeModule}；{@link JsonSerializer}（關閉 type info）；{@link DefaultKafkaProducerFactory}。
+ * <p>【概念】Engine 也可發事件／回覆；與 Consumer 共用同一套 JSON 時間格式，避免反序列化失敗。
+ * <p>【邊界】不決定 topic／業務 payload；發送由呼叫端注入 {@link KafkaTemplate} 完成。
  */
 @Configuration
 public class KafkaProducerConfig {
@@ -29,8 +29,8 @@ public class KafkaProducerConfig {
 
     /**
      * 【職責】建立 Kafka 專用 {@link ObjectMapper}，支援 Java 8 時間型別。
-     * 【技巧】註冊 {@link JavaTimeModule}。
-     * 【概念】OffsetDateTime 等若不註冊模組，Jackson 預設可能序列化失敗或格式不一致。
+     * <p>【技巧】註冊 {@link JavaTimeModule}。
+     * <p>【概念】OffsetDateTime 等若不註冊模組，Jackson 預設可能序列化失敗或格式不一致。
      * @return Kafka 用 ObjectMapper Bean
      */
     @Bean
@@ -42,8 +42,8 @@ public class KafkaProducerConfig {
 
     /**
      * 【職責】建立 Producer 工廠（broker、key／value 序列化器）。
-     * 【技巧】{@code setAddTypeInfo(false)} 避免在 JSON 塞 {@code @class}，跨服務更乾淨。
-     * 【概念】Key 用 String、Value 用 JSON，是最常見的業務訊息組合。
+     * <p>【技巧】{@code setAddTypeInfo(false)} 避免在 JSON 塞 {@code @class}，跨服務更乾淨。
+     * <p>【概念】Key 用 String、Value 用 JSON，是最常見的業務訊息組合。
      * @param kafkaObjectMapper 共用 ObjectMapper
      * @return Producer 工廠
      */
@@ -60,8 +60,8 @@ public class KafkaProducerConfig {
 
     /**
      * 【職責】提供可注入的 {@link KafkaTemplate} 供業務層發送訊息。
-     * 【技巧】包裝 {@link ProducerFactory}。
-     * 【概念】業務程式碼通常只依賴 Template，不必碰底層 Producer API。
+     * <p>【技巧】包裝 {@link ProducerFactory}。
+     * <p>【概念】業務程式碼通常只依賴 Template，不必碰底層 Producer API。
      * @param producerFactory Producer 工廠
      * @return KafkaTemplate Bean
      */

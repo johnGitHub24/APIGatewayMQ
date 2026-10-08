@@ -19,17 +19,17 @@ import java.util.Map;
 
 /**
  * 【職責】Engine 全域例外處理：把應用／框架例外轉成統一的 Problem JSON，供前端與整合方依 {@code errorCode} 分流。
- * 【技巧】{@code @RestControllerAdvice} + {@code @ExceptionHandler}；手動組 {@code application/problem+json}（RFC 7807 風格）。
- * 【概念】Controller 不應各自 try/catch 組錯誤格式；集中在 Advice 可保證狀態碼、欄位與錯誤碼契約一致。
- * 【邊界】不負責業務規則本身；只做「例外 → HTTP 回應」映射。
+ * <p>【技巧】{@code @RestControllerAdvice} + {@code @ExceptionHandler}；手動組 {@code application/problem+json}（RFC 7807 風格）。
+ * <p>【概念】Controller 不應各自 try/catch 組錯誤格式；集中在 Advice 可保證狀態碼、欄位與錯誤碼契約一致。
+ * <p>【邊界】不負責業務規則本身；只做「例外 → HTTP 回應」映射。
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
      * 【職責】處理不支援的 HTTP 方法，回 405。
-     * 【技巧】攔截 {@link HttpRequestMethodNotSupportedException}，寫入 {@link ErrorCodes#METHOD_NOT_ALLOWED}。
-     * 【概念】405 表示「資源存在但動詞不對」；與 404（資源不存在）分開，方便客戶端修正呼叫方式。
+     * <p>【技巧】攔截 {@link HttpRequestMethodNotSupportedException}，寫入 {@link ErrorCodes#METHOD_NOT_ALLOWED}。
+     * <p>【概念】405 表示「資源存在但動詞不對」；與 404（資源不存在）分開，方便客戶端修正呼叫方式。
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
@@ -42,8 +42,8 @@ public class GlobalExceptionHandler {
 
     /**
      * 【職責】處理 {@code @Valid} 驗證失敗，回 400 並附欄位錯誤清單。
-     * 【技巧】從 {@link MethodArgumentNotValidException#getBindingResult()} 取出 {@link FieldError} 轉成 {@code errors[]}。
-     * 【概念】Bean Validation 在進入 Service 前擋掉非法輸入；回傳欄位級訊息讓前端可對應表單標紅。
+     * <p>【技巧】從 {@link MethodArgumentNotValidException#getBindingResult()} 取出 {@link FieldError} 轉成 {@code errors[]}。
+     * <p>【概念】Bean Validation 在進入 Service 前擋掉非法輸入；回傳欄位級訊息讓前端可對應表單標紅。
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex,
@@ -60,8 +60,8 @@ public class GlobalExceptionHandler {
 
     /**
      * 【職責】處理風控拒單：一般規則回 422，重複訂單回 409。
-     * 【技巧】依 {@link RiskRejectedException#getErrorCode()} 分支 HTTP 狀態；可選附 {@code ruleCode}。
-     * 【概念】422 表示語意上無法處理（風控不通過）；409 表示與既有資源衝突（冪等／內容重複），兩者分流利於重試策略。
+     * <p>【技巧】依 {@link RiskRejectedException#getErrorCode()} 分支 HTTP 狀態；可選附 {@code ruleCode}。
+     * <p>【概念】422 表示語意上無法處理（風控不通過）；409 表示與既有資源衝突（冪等／內容重複），兩者分流利於重試策略。
      */
     @ExceptionHandler(RiskRejectedException.class)
     public ResponseEntity<Map<String, Object>> handleRiskRejected(RiskRejectedException ex,
@@ -78,8 +78,8 @@ public class GlobalExceptionHandler {
 
     /**
      * 【職責】處理合法流程下的狀態錯誤（不可取消／不可補成交等），回 422。
-     * 【技巧】攔截 {@link InvalidOrderStateException}，帶上領域 {@code errorCode}。
-     * 【概念】狀態機拒絕與風控拒絕都可能是 422，但 errorCode 不同；客戶端應依碼而非只看狀態碼判斷。
+     * <p>【技巧】攔截 {@link InvalidOrderStateException}，帶上領域 {@code errorCode}。
+     * <p>【概念】狀態機拒絕與風控拒絕都可能是 422，但 errorCode 不同；客戶端應依碼而非只看狀態碼判斷。
      */
     @ExceptionHandler(InvalidOrderStateException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidOrderState(InvalidOrderStateException ex,
@@ -92,8 +92,8 @@ public class GlobalExceptionHandler {
 
     /**
      * 【職責】處理資源不存在，回 404。
-     * 【技巧】攔截 {@link ResourceNotFoundException}，映射對應 {@code errorCode}（訂單／持倉／成交等）。
-     * 【概念】404 是「查無此資源」的穩定契約；細節放在 detail／errorCode，避免洩漏內部查詢路徑。
+     * <p>【技巧】攔截 {@link ResourceNotFoundException}，映射對應 {@code errorCode}（訂單／持倉／成交等）。
+     * <p>【概念】404 是「查無此資源」的穩定契約；細節放在 detail／errorCode，避免洩漏內部查詢路徑。
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex,
@@ -106,8 +106,8 @@ public class GlobalExceptionHandler {
 
     /**
      * 【職責】兜底未預期例外，回 500 且不外洩堆疊細節。
-     * 【技巧】{@code @ExceptionHandler(Exception.class)} 放最後；固定 detail 為通用訊息。
-     * 【概念】未捕捉例外若直接回傳 message，可能洩漏 SQL／路徑；對外只給穩定 errorCode，細節留在伺服器日誌。
+     * <p>【技巧】{@code @ExceptionHandler(Exception.class)} 放最後；固定 detail 為通用訊息。
+     * <p>【概念】未捕捉例外若直接回傳 message，可能洩漏 SQL／路徑；對外只給穩定 errorCode，細節留在伺服器日誌。
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex, HttpServletRequest request) {

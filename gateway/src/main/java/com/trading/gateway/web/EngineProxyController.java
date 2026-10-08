@@ -13,11 +13,11 @@ import reactor.core.publisher.Mono;
 
 /**
  * 【職責】薄 Controller：將查詢／成交／取消等 HTTP API 透明轉發至 Engine（同步代理路徑）。
- * 【技巧】WebFlux {@code @RestController}；{@link ServerWebExchange} 取 path／headers／body；
- *         {@link DataBufferUtils#join} 聚合請求 body 後委派 {@link EngineProxyService#forward}。
- * 【概念】與 {@link OrderSubmitController} 分離：需要「立刻拿到 Engine 回應」走代理；
- *         新單寫入走 Kafka 202。Controller 只做協議適配，不寫商業規則、不直接碰 Repository。
- * 【邊界】不解析訂單 JSON、不做風控；路徑與方法對應由 mapping 宣告，轉發細節在 Service。
+ * <p>【技巧】WebFlux {@code @RestController}；{@link ServerWebExchange} 取 path／headers／body；
+ * <br>{@link DataBufferUtils#join} 聚合請求 body 後委派 {@link EngineProxyService#forward}。
+ * <p>【概念】與 {@link OrderSubmitController} 分離：需要「立刻拿到 Engine 回應」走代理；
+ * <br>新單寫入走 Kafka 202。Controller 只做協議適配，不寫商業規則、不直接碰 Repository。
+ * <p>【邊界】不解析訂單 JSON、不做風控；路徑與方法對應由 mapping 宣告，轉發細節在 Service。
  */
 @RestController
 public class EngineProxyController {
@@ -26,8 +26,8 @@ public class EngineProxyController {
 
     /**
      * 【職責】注入轉發服務。
-     * 【技巧】建構子注入，利於單元測試替換。
-     * 【概念】Controller 依賴 Service 介面／實作，不自己建立 WebClient。
+     * <p>【技巧】建構子注入，利於單元測試替換。
+     * <p>【概念】Controller 依賴 Service 介面／實作，不自己建立 WebClient。
      *
      * @param proxyService 執行實際 HTTP 轉發
      */
@@ -37,8 +37,8 @@ public class EngineProxyController {
 
     /**
      * 【職責】代理所有 {@code GET /api/v1/**}（訂單查詢等讀取 API）。
-     * 【技巧】{@code @GetMapping("/api/v1/**")} 萬用字元路徑；回傳 {@code Mono<ResponseEntity<byte[]>>}。
-     * 【概念】讀取走同步代理，客戶端可直接拿到 Engine 的狀態碼與 body，無需輪詢 Kafka。
+     * <p>【技巧】{@code @GetMapping("/api/v1/**")} 萬用字元路徑；回傳 {@code Mono<ResponseEntity<byte[]>>}。
+     * <p>【概念】讀取走同步代理，客戶端可直接拿到 Engine 的狀態碼與 body，無需輪詢 Kafka。
      *
      * @param exchange 目前 WebFlux 請求上下文
      * @return Engine 回應的 Mono
@@ -50,8 +50,8 @@ public class EngineProxyController {
 
     /**
      * 【職責】代理 {@code POST /api/v1/orders/{id}/fill}（成交指令）。
-     * 【技巧】明確 mapping，避免與非同步 {@code POST /api/v1/orders} 衝突。
-     * 【概念】成交仍需 Engine 同步處理並回結果，故不走 Kafka 下單 topic。
+     * <p>【技巧】明確 mapping，避免與非同步 {@code POST /api/v1/orders} 衝突。
+     * <p>【概念】成交仍需 Engine 同步處理並回結果，故不走 Kafka 下單 topic。
      *
      * @param exchange 目前請求
      * @return Engine 回應的 Mono
@@ -63,8 +63,8 @@ public class EngineProxyController {
 
     /**
      * 【職責】代理 {@code PATCH /api/v1/orders/{id}/cancel}（取消訂單）。
-     * 【技巧】{@code @PatchMapping} 對應部分更新語意的取消操作。
-     * 【概念】取消與查詢同屬「要 Engine 當下結果」的路徑，統一由本 Controller 轉發。
+     * <p>【技巧】{@code @PatchMapping} 對應部分更新語意的取消操作。
+     * <p>【概念】取消與查詢同屬「要 Engine 當下結果」的路徑，統一由本 Controller 轉發。
      *
      * @param exchange 目前請求
      * @return Engine 回應的 Mono

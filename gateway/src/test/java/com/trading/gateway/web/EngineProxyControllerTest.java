@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * 【職責】保護 Engine 同步代理 Happy 與下游錯誤透傳。
- * 【技巧】{@code @WebFluxTest} Mock {@link EngineProxyService}。
- * 【概念】查詢走代理拿立刻結果；Gateway 不重寫 Engine 狀態碼。
+ * <p>【技巧】{@code @WebFluxTest} Mock {@link EngineProxyService}。
+ * <p>【概念】查詢走代理拿立刻結果；Gateway 不重寫 Engine 狀態碼。
  */
 @Tag("unit")
 @WebFluxTest(controllers = EngineProxyController.class)

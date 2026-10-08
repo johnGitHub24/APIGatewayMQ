@@ -10,10 +10,10 @@ import java.time.Instant;
 
 /**
  * 【職責】Gateway → Engine 的 Kafka 下單指令訊息（跨服務契約）。
- * 【技巧】Lombok Builder 組裝；金額用 {@link BigDecimal}；時間用 {@link Instant}（需搭配 JavaTimeModule 序列化）。
- * 【概念】削峰的「信封」：Gateway 快速寫入 {@link Topics#ORDER_COMMANDS}，Engine Consumer 依此結構反序列化後處理。
- *         兩邊共用同一類別，避免各自定義 DTO 造成契約漂移。
- * 【邊界】只描述命令內容；不含受理 HTTP 回應（見 {@link OrderAcceptedResponse}）、不含成交結果事件。
+ * <p>【技巧】Lombok Builder 組裝；金額用 {@link BigDecimal}；時間用 {@link Instant}（需搭配 JavaTimeModule 序列化）。
+ * <p>【概念】削峰的「信封」：Gateway 快速寫入 {@link Topics#ORDER_COMMANDS}，Engine Consumer 依此結構反序列化後處理。
+ * <br>兩邊共用同一類別，避免各自定義 DTO 造成契約漂移。
+ * <p>【邊界】只描述命令內容；不含受理 HTTP 回應（見 {@link OrderAcceptedResponse}）、不含成交結果事件。
  */
 @Data
 @Builder

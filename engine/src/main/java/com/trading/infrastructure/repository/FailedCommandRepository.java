@@ -14,9 +14,9 @@ import java.util.List;
 
 /**
  * 【職責】失敗指令（DLQ）持久化存取：待重試查詢、狀態統計與過期清理。
- * 【技巧】Spring Data JPA 方法命名查詢 + {@code @Modifying}/{@code @Query} 批次刪除。
- * 【概念】Repository 只做查寫，不含「何時重試、如何重放」；那是 JOB-C／Service 的事。
- * 【邊界】不含商業規則與 HTTP。
+ * <p>【技巧】Spring Data JPA 方法命名查詢 + {@code @Modifying}/{@code @Query} 批次刪除。
+ * <p>【概念】Repository 只做查寫，不含「何時重試、如何重放」；那是 JOB-C／Service 的事。
+ * <p>【邊界】不含商業規則與 HTTP。
  */
 public interface FailedCommandRepository extends JpaRepository<FailedCommandEntity, Long> {
 

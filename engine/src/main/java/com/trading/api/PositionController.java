@@ -10,10 +10,10 @@ import java.util.List;
 
 /**
  * 【職責】持倉查詢 API：列出全部或依標的查單一淨部位。
- * 【技巧】{@code @RestController} + Mapper 轉 DTO；列表端點在記憶體做簡易分頁（{@code subList}）。
- * 【概念】持倉＝帳戶對某標的的淨部位（數量、均價、未實現損益）。買加倉、賣減倉。
- * 【邊界】不更新持倉（成交後由 {@link com.trading.application.PositionService#updateAfterFill}）；
- *         本 Controller 僅讀取與組裝回應。
+ * <p>【技巧】{@code @RestController} + Mapper 轉 DTO；列表端點在記憶體做簡易分頁（{@code subList}）。
+ * <p>【概念】持倉＝帳戶對某標的的淨部位（數量、均價、未實現損益）。買加倉、賣減倉。
+ * <p>【邊界】不更新持倉（成交後由 {@link com.trading.application.PositionService#updateAfterFill}）；
+ * <br>本 Controller 僅讀取與組裝回應。
  */
 @RestController
 @RequestMapping("/api/v1/positions")
@@ -30,8 +30,8 @@ public class PositionController {
 
     /**
      * 【職責】分頁列出所有持倉。
-     * 【技巧】先取全量再 {@code subList}；{@code Math.min/max} 保護 page/size。
-     * 【概念】教學環境持倉筆數通常很少，記憶體分頁可接受；正式系統應改 DB 分頁。
+     * <p>【技巧】先取全量再 {@code subList}；{@code Math.min/max} 保護 page/size。
+     * <p>【概念】教學環境持倉筆數通常很少，記憶體分頁可接受；正式系統應改 DB 分頁。
      * @param page 頁碼（從 0）
      * @param size 每頁筆數（預設 20，上限 100）
      * @return 分頁持倉回應
@@ -54,8 +54,8 @@ public class PositionController {
 
     /**
      * 【職責】查詢單一標的的持倉明細。
-     * 【技巧】路徑變數 {@code symbol}；找不到由 Service 拋 404 對應例外。
-     * 【概念】用標的當自然鍵查倉，比用內部 id 更符合交易員習慣。
+     * <p>【技巧】路徑變數 {@code symbol}；找不到由 Service 拋 404 對應例外。
+     * <p>【概念】用標的當自然鍵查倉，比用內部 id 更符合交易員習慣。
      * @param symbol 標的代碼（如 AAPL）
      * @return 持倉回應
      */

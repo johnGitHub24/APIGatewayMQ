@@ -18,9 +18,9 @@ import java.util.List;
 
 /**
  * 【職責】應用就緒後於 Console 印出全棧常用 URL（Gateway／Engine／Prometheus／Grafana／Swagger）。
- * 【技巧】聽 {@link ApplicationReadyEvent}；開關全來自 {@code startup.info.*}；以 UTF-8 {@link PrintStream} 寫出；需 JVM {@code -Dstdout.encoding=UTF-8} 與 IDE Console=UTF-8（見 EOS knowledge）。
- * 【概念】Gateway 無 JPA／H2；本機仍需 Kafka（寫命令）與 Redis（限流，故障 fail-open）。
- * 【邊界】不負責啟動 Engine／Docker；不驗證下游是否可連。
+ * <p>【技巧】聽 {@link ApplicationReadyEvent}；開關全來自 {@code startup.info.*}；以 UTF-8 {@link PrintStream} 寫出；需 JVM {@code -Dstdout.encoding=UTF-8} 與 IDE Console=UTF-8（見 EOS knowledge）。
+ * <p>【概念】Gateway 無 JPA／H2；本機仍需 Kafka（寫命令）與 Redis（限流，故障 fail-open）。
+ * <p>【邊界】不負責啟動 Engine／Docker；不驗證下游是否可連。
  */
 @Component
 public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEvent> {
@@ -73,7 +73,7 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
 
     /**
      * 【職責】印出規格書全棧入口；Gateway 啟動通常代表全棧／本機已具備依賴。
-     * 【技巧】位址可由 {@code startup.info.*-url} 覆寫；預設對齊 docker-compose 教學埠。
+     * <p>【技巧】位址可由 {@code startup.info.*-url} 覆寫；預設對齊 docker-compose 教學埠。
      */
     private static void printStackLinks(PrintStream out, Environment env) {
         boolean probe = Boolean.TRUE.equals(env.getProperty("startup.info.probe", Boolean.class, true));
@@ -96,7 +96,7 @@ public class StartupInfoLogger implements ApplicationListener<ApplicationReadyEv
 
     /**
      * 【職責】以 UTF-8 寫出 banner（與 JVM stdout.encoding=UTF-8、IDE Console UTF-8 對齊）。
-     * 【技巧】勿依賴系統預設 MS950；端到端 UTF-8 才能 run-anywhere。
+     * <p>【技巧】勿依賴系統預設 MS950；端到端 UTF-8 才能 run-anywhere。
      */
 
     private static String mark(boolean probe, String url) {

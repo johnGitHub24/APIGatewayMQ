@@ -11,9 +11,9 @@ import java.util.List;
 
 /**
  * 【職責】訂單事件持久化存取：依訂單查時間軸、統計與批次清理舊事件。
- * 【技巧】Spring Data JPA；清理用 {@code @Modifying} JPQL。
- * 【概念】事件表會隨交易成長；查詢與清理方法分開，避免在 Service 寫原生 SQL。
- * 【邊界】不含事件語意編排。
+ * <p>【技巧】Spring Data JPA；清理用 {@code @Modifying} JPQL。
+ * <p>【概念】事件表會隨交易成長；查詢與清理方法分開，避免在 Service 寫原生 SQL。
+ * <p>【邊界】不含事件語意編排。
  */
 public interface OrderEventRepository extends JpaRepository<OrderEventEntity, Long> {
 

@@ -11,9 +11,9 @@ import java.time.OffsetDateTime;
 
 /**
  * 【職責】映射 {@code pnl_snapshots}：日終持倉損益快照，供歷史查詢與報表。
- * 【技巧】JPA Entity；{@link LocalDate} 存交易日、{@link OffsetDateTime} 存寫入時間。
- * 【概念】JOB-B 把「當下 PnL」固化成列；之後查歷史不必重算整段成交與標記價。
- * 【邊界】不含快照計算邏輯；只存結果列。
+ * <p>【技巧】JPA Entity；{@link LocalDate} 存交易日、{@link OffsetDateTime} 存寫入時間。
+ * <p>【概念】JOB-B 把「當下 PnL」固化成列；之後查歷史不必重算整段成交與標記價。
+ * <p>【邊界】不含快照計算邏輯；只存結果列。
  */
 @Getter
 @Setter

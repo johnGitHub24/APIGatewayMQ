@@ -24,8 +24,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * 【職責】保護 {@link TradeService} 成交寫入與查詢。
- * 【技巧】Mockito 驗證 save／分頁分支與 404 例外。
- * 【概念】成交列是對帳事實來源，單測鎖定 API 依賴的查詢契約。
+ * <p>【技巧】Mockito 驗證 save／分頁分支與 404 例外。
+ * <p>【概念】成交列是對帳事實來源，單測鎖定 API 依賴的查詢契約。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

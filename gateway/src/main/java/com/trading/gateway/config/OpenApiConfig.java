@@ -10,18 +10,18 @@ import java.util.List;
 
 /**
  * 【職責】定義 Gateway 對外 HTTP API 的 OpenAPI（Swagger）文件元資料。
- * 【技巧】springdoc 掃描 {@code @RestController} 後，與此 {@link OpenAPI} Bean 合併成 Swagger UI／OpenAPI JSON。
- * 【概念】文件與程式同進程：改 Controller 註解即可反映到 UI，減少「規格與實作漂移」。
- *         完整合併規格另見倉庫 {@code docs/openapi.yaml}。
- * 【邊界】只描述文件標題／說明／預設 server；不實作業務 API。
+ * <p>【技巧】springdoc 掃描 {@code @RestController} 後，與此 {@link OpenAPI} Bean 合併成 Swagger UI／OpenAPI JSON。
+ * <p>【概念】文件與程式同進程：改 Controller 註解即可反映到 UI，減少「規格與實作漂移」。
+ * <br>完整合併規格另見倉庫 {@code docs/openapi.yaml}。
+ * <p>【邊界】只描述文件標題／說明／預設 server；不實作業務 API。
  */
 @Configuration
 public class OpenApiConfig {
 
     /**
      * 【職責】註冊 {@link OpenAPI} Bean，供 springdoc 產生 Swagger UI 與 OpenAPI JSON。
-     * 【技巧】{@link Info} 設 title／description／version；{@link Server} 標示本機 Gateway {@code :8080}。
-     * 【概念】OpenAPI 是「機器可讀的 API 契約」；Swagger UI 只是它的瀏覽介面。
+     * <p>【技巧】{@link Info} 設 title／description／version；{@link Server} 標示本機 Gateway {@code :8080}。
+     * <p>【概念】OpenAPI 是「機器可讀的 API 契約」；Swagger UI 只是它的瀏覽介面。
      *
      * @return 含標題、說明與預設伺服器位址的文件物件
      */

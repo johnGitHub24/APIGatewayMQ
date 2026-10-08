@@ -14,9 +14,9 @@ import java.util.List;
 
 /**
  * 【職責】JOB-B：為每個持倉建立當日 PnL／持倉結算快照，並支援依日查詢。
- * 【技巧】同日同 symbol 先查再寫（冪等）；null 數值以 ZERO 落地。
- * 【概念】快照＝「那天收盤時倉長怎樣」；與即時持倉表分離，避免歷史被後續成交改寫。
- * 【邊界】不觸發 cron；不計算新的 mark（沿用持倉當下欄位）。
+ * <p>【技巧】同日同 symbol 先查再寫（冪等）；null 數值以 ZERO 落地。
+ * <p>【概念】快照＝「那天收盤時倉長怎樣」；與即時持倉表分離，避免歷史被後續成交改寫。
+ * <p>【邊界】不觸發 cron；不計算新的 mark（沿用持倉當下欄位）。
  */
 @Service
 @Slf4j
@@ -34,8 +34,8 @@ public class PnlSnapshotService {
 
     /**
      * 【職責】建立當日結算快照；已存在的 symbol 跳過。
-     * 【技巧】{@code findBySnapshotDateAndSymbol} 判斷冪等；迴圈寫入。
-     * 【概念】Job 重跑安全：不會因重試產生重複結算列。
+     * <p>【技巧】{@code findBySnapshotDateAndSymbol} 判斷冪等；迴圈寫入。
+     * <p>【概念】Job 重跑安全：不會因重試產生重複結算列。
      * @return 本次新寫入的快照筆數
      */
     @Transactional
@@ -70,8 +70,8 @@ public class PnlSnapshotService {
 
     /**
      * 【職責】依結算日查詢 PnL 快照。
-     * 【技巧】{@code date == null} 時用 {@link LocalDate#now()}。
-     * 【概念】API 省略日期＝「看今天」，減少呼叫端樣板碼。
+     * <p>【技巧】{@code date == null} 時用 {@link LocalDate#now()}。
+     * <p>【概念】API 省略日期＝「看今天」，減少呼叫端樣板碼。
      * @param date 結算日；null 表示今日
      * @return 該日快照列表
      */

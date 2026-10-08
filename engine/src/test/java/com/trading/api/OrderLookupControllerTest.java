@@ -23,8 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 【職責】保護依 clientOrderId 查單 Happy 與 404。
- * 【技巧】{@code @WebMvcTest(OrderLookupController)} 掛在 {@code com.trading.api} 以使用測試 Application。
- * 【概念】冪等追蹤靠外部鍵，找不到必須明確 404。
+ * <p>【技巧】{@code @WebMvcTest(OrderLookupController)} 掛在 {@code com.trading.api} 以使用測試 Application。
+ * <p>【概念】冪等追蹤靠外部鍵，找不到必須明確 404。
  */
 @Tag("unit")
 @WebMvcTest(controllers = OrderLookupController.class)

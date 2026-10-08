@@ -22,11 +22,11 @@ import java.util.UUID;
 
 /**
  * 【職責】薄 Controller：非同步下單 HTTP 入口（驗證 → 組命令 → 發 Kafka → 回 202 Accepted）。
- * 【技巧】WebFlux {@code Mono}；{@code @Valid} Bean Validation；{@code Idempotency-Key} 標頭；
- *         {@code Mono.fromFuture(producer.publish(...))} 銜接 Kafka CompletableFuture。
- * 【概念】202 表示「已受理入隊」，不是「已成交」。削峰靠 MQ：入口快回，Engine 慢慢消化。
- *         請求通常先經 {@link com.trading.gateway.filter.RateLimitWebFilter}。不負責風控／持久化／直接存取 Repository。
- * 【邊界】只組裝訊息與 HTTP 狀態；發送細節在 {@link OrderCommandProducer}；查結果走 pollUrl 或代理 Controller。
+ * <p>【技巧】WebFlux {@code Mono}；{@code @Valid} Bean Validation；{@code Idempotency-Key} 標頭；
+ * <br>{@code Mono.fromFuture(producer.publish(...))} 銜接 Kafka CompletableFuture。
+ * <p>【概念】202 表示「已受理入隊」，不是「已成交」。削峰靠 MQ：入口快回，Engine 慢慢消化。
+ * <br>請求通常先經 {@link com.trading.gateway.filter.RateLimitWebFilter}。不負責風控／持久化／直接存取 Repository。
+ * <p>【邊界】只組裝訊息與 HTTP 狀態；發送細節在 {@link OrderCommandProducer}；查結果走 pollUrl 或代理 Controller。
  */
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -37,8 +37,8 @@ public class OrderSubmitController {
 
     /**
      * 【職責】注入 Kafka 發送器與 Gateway 設定。
-     * 【技巧】建構子注入；{@code instanceId} 來自 properties 寫入命令的 sourceGateway。
-     * 【概念】Controller 不 new Producer，由 Spring 管理生命週期與連線。
+     * <p>【技巧】建構子注入；{@code instanceId} 來自 properties 寫入命令的 sourceGateway。
+     * <p>【概念】Controller 不 new Producer，由 Spring 管理生命週期與連線。
      *
      * @param producer   將訂單命令寫入 Kafka
      * @param properties 提供 instanceId 等
@@ -50,10 +50,10 @@ public class OrderSubmitController {
 
     /**
      * 【職責】接受新訂單：驗證 body、解析冪等鍵、組裝命令並非同步發布，成功回 202。
-     * 【技巧】{@link OrderCommandMessage#builder()}／{@link OrderAcceptedResponse#builder()}；
-     *         失敗 {@code onErrorMap} 成 503 {@link ResponseStatusException}。
-     * 【概念】冪等鍵優先於 body.clientOrderId，再退回伺服器 UUID——讓重試客戶端可穩定追蹤同一筆意圖。
-     * 【邊界】不呼叫 Engine HTTP；Kafka 不可用時才變 503，不假裝已處理。
+     * <p>【技巧】{@link OrderCommandMessage#builder()}／{@link OrderAcceptedResponse#builder()}；
+     * <br>失敗 {@code onErrorMap} 成 503 {@link ResponseStatusException}。
+     * <p>【概念】冪等鍵優先於 body.clientOrderId，再退回伺服器 UUID——讓重試客戶端可穩定追蹤同一筆意圖。
+     * <p>【邊界】不呼叫 Engine HTTP；Kafka 不可用時才變 503，不假裝已處理。
      *
      * @param request        JSON 訂單內容，需通過 Bean Validation
      * @param idempotencyKey 可選 {@code Idempotency-Key}，優先作為 clientOrderId
@@ -113,10 +113,10 @@ public class OrderSubmitController {
 
     /**
      * 【職責】Gateway 對外下單請求的 JSON 對應結構（請求 DTO）。
-     * 【技巧】Jakarta {@code @NotBlank}／{@code @NotNull}；Lombok {@code @Data} 產生存取子供綁定與驗證。
-     * 【概念】與 {@link OrderCommandMessage} 分離：HTTP 契約可演進，不必與 Kafka 訊息欄位一一鎖死
-     *         （例如此處無 sourceGateway，由伺服器填入）。
-     * 【邊界】僅承載輸入；不含受理回應欄位（見 {@link OrderAcceptedResponse}）。
+     * <p>【技巧】Jakarta {@code @NotBlank}／{@code @NotNull}；Lombok {@code @Data} 產生存取子供綁定與驗證。
+     * <p>【概念】與 {@link OrderCommandMessage} 分離：HTTP 契約可演進，不必與 Kafka 訊息欄位一一鎖死
+     * <br>（例如此處無 sourceGateway，由伺服器填入）。
+     * <p>【邊界】僅承載輸入；不含受理回應欄位（見 {@link OrderAcceptedResponse}）。
      */
     @Data
     public static class GatewayOrderRequest {

@@ -9,11 +9,11 @@ import java.util.List;
 
 /**
  * 【職責】綁定 {@code gateway.*} 設定：Engine 位址、限流閾值、本實例識別。
- * 【技巧】{@code @ConfigurationProperties(prefix = "gateway")} 將 YAML／環境變數映射到欄位；
- *         Lombok {@code @Data} 產生 getter／setter 供 Spring 綁定與業務讀取。
- * 【概念】集中設定比散落 {@code @Value} 好維護：改 prefix 下的鍵即可，正式環境用環境變數覆寫敏感或部署相關值
- *         （例如 {@code GATEWAY_ENGINE_URIS}、{@code GATEWAY_RATE_LIMIT_PER_SECOND}）。
- * 【邊界】只持有設定值，不執行限流或轉發；消費方為 Filter／Service／Controller。
+ * <p>【技巧】{@code @ConfigurationProperties(prefix = "gateway")} 將 YAML／環境變數映射到欄位；
+ * <br>Lombok {@code @Data} 產生 getter／setter 供 Spring 綁定與業務讀取。
+ * <p>【概念】集中設定比散落 {@code @Value} 好維護：改 prefix 下的鍵即可，正式環境用環境變數覆寫敏感或部署相關值
+ * <br>（例如 {@code GATEWAY_ENGINE_URIS}、{@code GATEWAY_RATE_LIMIT_PER_SECOND}）。
+ * <p>【邊界】只持有設定值，不執行限流或轉發；消費方為 Filter／Service／Controller。
  */
 @Data
 @Configuration

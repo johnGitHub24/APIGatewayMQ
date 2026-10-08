@@ -9,9 +9,9 @@ import java.time.OffsetDateTime;
 
 /**
  * 【職責】訂單查詢／下單操作的 HTTP 回應：基本欄位、成交進度、風控結果與時間戳。
- * 【技巧】Lombok {@code @Data} POJO；可嵌 {@link TradeResponse} 列表供查單展開成交。
- * 【概念】回應 DTO 是對外契約：隱藏 Entity 細節（如 JPA 註解），只暴露客戶端需要的欄位。
- * 【邊界】不負責組裝邏輯；由 Mapper／Service 填值。
+ * <p>【技巧】Lombok {@code @Data} POJO；可嵌 {@link TradeResponse} 列表供查單展開成交。
+ * <p>【概念】回應 DTO 是對外契約：隱藏 Entity 細節（如 JPA 註解），只暴露客戶端需要的欄位。
+ * <p>【邊界】不負責組裝邏輯；由 Mapper／Service 填值。
  */
 @Data
 public class OrderResponse {

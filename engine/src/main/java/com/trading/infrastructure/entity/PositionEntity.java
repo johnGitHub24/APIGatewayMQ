@@ -10,9 +10,9 @@ import java.time.OffsetDateTime;
 
 /**
  * 【職責】映射 {@code positions}：每標的一筆淨持倉（數量、成本、未實現損益、標記價）。
- * 【技巧】JPA Entity；{@code symbol} unique；{@code @UpdateTimestamp} 維護更新時間。
- * 【概念】持倉是成交累積的結果狀態；下單風控會讀 quantity／曝險，成交後再回寫。
- * 【邊界】不含持倉演算法；由應用層依成交更新欄位。
+ * <p>【技巧】JPA Entity；{@code symbol} unique；{@code @UpdateTimestamp} 維護更新時間。
+ * <p>【概念】持倉是成交累積的結果狀態；下單風控會讀 quantity／曝險，成交後再回寫。
+ * <p>【邊界】不含持倉演算法；由應用層依成交更新欄位。
  */
 @Getter
 @Setter

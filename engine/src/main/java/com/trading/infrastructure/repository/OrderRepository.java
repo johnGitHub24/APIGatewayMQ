@@ -15,9 +15,9 @@ import java.util.Optional;
 
 /**
  * 【職責】訂單持久化存取：冪等鍵查詢、條件分頁、逾時掃描與內容查重。
- * 【技巧】Spring Data JPA 方法命名推導查詢；{@link Pageable} 做分頁保護。
- * 【概念】風控重複單、JOB-A 逾時取消都依賴這些查詢；Repository 只回資料，判斷在 Service。
- * 【邊界】不含狀態轉移或風控規則。
+ * <p>【技巧】Spring Data JPA 方法命名推導查詢；{@link Pageable} 做分頁保護。
+ * <p>【概念】風控重複單、JOB-A 逾時取消都依賴這些查詢；Repository 只回資料，判斷在 Service。
+ * <p>【邊界】不含狀態轉移或風控規則。
  */
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 

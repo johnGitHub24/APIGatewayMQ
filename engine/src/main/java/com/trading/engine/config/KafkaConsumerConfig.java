@@ -20,10 +20,10 @@ import java.util.Map;
 
 /**
  * 【職責】Kafka 消費者 Spring 設定：下單指令的反序列化、並行度與錯誤重試。
- * 【技巧】{@code @Configuration} + {@code @Bean}；{@link JsonDeserializer}；{@link ConcurrentKafkaListenerContainerFactory}；
- *         {@link DefaultErrorHandler} + {@link FixedBackOff}。
- * 【概念】Listener 要能把 JSON 還原成 {@link OrderCommandMessage}；concurrency 決定同 group 內並行消費數。
- * 【邊界】不處理業務；業務失敗分流在 {@link com.trading.engine.messaging.OrderCommandConsumer}。
+ * <p>【技巧】{@code @Configuration} + {@code @Bean}；{@link JsonDeserializer}；{@link ConcurrentKafkaListenerContainerFactory}；
+ * <br>{@link DefaultErrorHandler} + {@link FixedBackOff}。
+ * <p>【概念】Listener 要能把 JSON 還原成 {@link OrderCommandMessage}；concurrency 決定同 group 內並行消費數。
+ * <p>【邊界】不處理業務；業務失敗分流在 {@link com.trading.engine.messaging.OrderCommandConsumer}。
  */
 @Configuration
 public class KafkaConsumerConfig {
@@ -36,16 +36,16 @@ public class KafkaConsumerConfig {
 
     /**
      * 【概念】必須手動套到自訂 {@link ConcurrentKafkaListenerContainerFactory}：
-     * Spring Boot 的 {@code spring.kafka.listener.auto-startup} 只會設定預設
-     * {@code kafkaListenerContainerFactory}，本專案 Listener 用的是自訂 bean，不套就會一直連 Kafka。
+     * <br>Spring Boot 的 {@code spring.kafka.listener.auto-startup} 只會設定預設
+     * <br>{@code kafkaListenerContainerFactory}，本專案 Listener 用的是自訂 bean，不套就會一直連 Kafka。
      */
     @Value("${spring.kafka.listener.auto-startup:true}")
     private boolean listenerAutoStartup;
 
     /**
      * 【職責】建立下單指令的 {@link ConsumerFactory}（連線、反序列化、offset 策略）。
-     * 【技巧】{@link DefaultKafkaConsumerFactory}；信任套件 {@code com.trading.common}；{@code AUTO_OFFSET_RESET=earliest}。
-     * 【概念】group-id 決定「同一消費者群組只處理一次」；earliest 方便本機重跑時從頭讀。
+     * <p>【技巧】{@link DefaultKafkaConsumerFactory}；信任套件 {@code com.trading.common}；{@code AUTO_OFFSET_RESET=earliest}。
+     * <p>【概念】group-id 決定「同一消費者群組只處理一次」；earliest 方便本機重跑時從頭讀。
      * @param kafkaObjectMapper 與 Producer 共用的 JSON ObjectMapper
      * @return 消費者工廠
      */
@@ -68,10 +68,10 @@ public class KafkaConsumerConfig {
 
     /**
      * 【職責】建立 {@code @KafkaListener} 使用的容器工廠（並行度與框架層重試）。
-     * 【技巧】{@code setConcurrency(3)}；{@code setAutoStartup} 綁定 {@code spring.kafka.listener.auto-startup}；
-     *         {@link DefaultErrorHandler} + {@link FixedBackOff}(1s, 3 次)。
-     * 【概念】此處重試是「反序列化／listener 拋錯」的短重試；持久化 DLQ 是另一層（JOB-C）。
-     *         自訂 factory 不會自動吃 Boot 的 auto-startup，必須 {@code setAutoStartup}，否則 local 也會連 Kafka。
+     * <p>【技巧】{@code setConcurrency(3)}；{@code setAutoStartup} 綁定 {@code spring.kafka.listener.auto-startup}；
+     * <br>{@link DefaultErrorHandler} + {@link FixedBackOff}(1s, 3 次)。
+     * <p>【概念】此處重試是「反序列化／listener 拋錯」的短重試；持久化 DLQ 是另一層（JOB-C）。
+     * <br>自訂 factory 不會自動吃 Boot 的 auto-startup，必須 {@code setAutoStartup}，否則 local 也會連 Kafka。
      * @param orderCommandConsumerFactory 消費者工廠
      * @return Listener 容器工廠（bean 名供 {@code containerFactory} 引用）
      */

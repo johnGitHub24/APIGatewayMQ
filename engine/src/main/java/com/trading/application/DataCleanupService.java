@@ -13,9 +13,9 @@ import java.util.List;
 
 /**
  * 【職責】JOB-D 業務：依保留天數清理過期訂單事件與已終結失敗指令。
- * 【技巧】{@code @Transactional}；依 cutoff 呼叫 Repository 批次刪除；回傳 {@link CleanupResult} record。
- * 【概念】審計表會一直長；只刪「夠舊且已終結」的資料，保留近期可追查。
- * 【邊界】不決定 cron（Job 觸發）；不刪進行中的 PENDING 失敗指令。
+ * <p>【技巧】{@code @Transactional}；依 cutoff 呼叫 Repository 批次刪除；回傳 {@link CleanupResult} record。
+ * <p>【概念】審計表會一直長；只刪「夠舊且已終結」的資料，保留近期可追查。
+ * <p>【邊界】不決定 cron（Job 觸發）；不刪進行中的 PENDING 失敗指令。
  */
 @Service
 @Slf4j
@@ -36,8 +36,8 @@ public class DataCleanupService {
 
     /**
      * 【職責】執行一次清理並回傳各表刪除筆數。
-     * 【技巧】{@code now.minusDays(retention)} 算 cutoff；只刪 SUCCEEDED／DEAD 的失敗指令。
-     * 【概念】事件與失敗指令可有不同保留期——事件偏稽核、失敗指令偏營運佇列。
+     * <p>【技巧】{@code now.minusDays(retention)} 算 cutoff；只刪 SUCCEEDED／DEAD 的失敗指令。
+     * <p>【概念】事件與失敗指令可有不同保留期——事件偏稽核、失敗指令偏營運佇列。
      * @return 清理結果（事件刪除數、失敗指令刪除數）
      */
     @Transactional
@@ -61,8 +61,8 @@ public class DataCleanupService {
 
     /**
      * 【職責】承載一次清理的刪除統計。
-     * 【技巧】Java record 自動產生 accessor／equals。
-     * 【概念】用小型不可變結果物件回傳多個計數，比 Map 或陣列更可讀。
+     * <p>【技巧】Java record 自動產生 accessor／equals。
+     * <p>【概念】用小型不可變結果物件回傳多個計數，比 Map 或陣列更可讀。
      */
     public record CleanupResult(int deletedOrderEvents, int deletedFailedCommands) {
     }

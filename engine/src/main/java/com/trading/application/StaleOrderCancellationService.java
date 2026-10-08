@@ -15,9 +15,9 @@ import java.util.List;
 
 /**
  * 【職責】JOB-A：將逾時仍為 NEW／PARTIALLY_FILLED 的訂單自動取消。
- * 【技巧】依 timeout 算 cutoff；批次查詢後改 CANCELLED 並寫事件。
- * 【概念】掛太久的單會佔用風險與注意力；逾時取消是營運自動化，不是使用者主動撤單。
- * 【邊界】不處理已 FILLED／REJECTED；批次大小與秒數來自 {@link JobProperties}。
+ * <p>【技巧】依 timeout 算 cutoff；批次查詢後改 CANCELLED 並寫事件。
+ * <p>【概念】掛太久的單會佔用風險與注意力；逾時取消是營運自動化，不是使用者主動撤單。
+ * <p>【邊界】不處理已 FILLED／REJECTED；批次大小與秒數來自 {@link JobProperties}。
  */
 @Service
 @Slf4j
@@ -41,8 +41,8 @@ public class StaleOrderCancellationService {
 
     /**
      * 【職責】掃描並取消逾時訂單。
-     * 【技巧】{@code findByStatusInAndCreatedAtBefore} + {@link PageRequest} 限批；寫 CANCELLED 事件。
-     * 【概念】只動「可取消」狀態，避免誤傷已完成單。
+     * <p>【技巧】{@code findByStatusInAndCreatedAtBefore} + {@link PageRequest} 限批；寫 CANCELLED 事件。
+     * <p>【概念】只動「可取消」狀態，避免誤傷已完成單。
      * @return 本次取消的訂單筆數
      */
     @Transactional

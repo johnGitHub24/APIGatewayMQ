@@ -2,10 +2,10 @@ package com.trading.domain;
 
 /**
  * 【職責】集中定義 Engine API／風控錯誤碼字串，供例外與 Problem JSON 的 {@code errorCode} 使用。
- * 【技巧】{@code public static final String} 常數類；私有建構子防止實例化。
- * 【概念】錯誤碼是「機器可讀契約」：前端／測試可依碼分支，訊息則可本地化。
- *         若到處硬編碼字串，重構時易漏改；集中常數讓 IDE 能找到所有引用。
- * 【邊界】不負責 HTTP 狀態碼映射（由 {@link com.trading.config.GlobalExceptionHandler} 決定）。
+ * <p>【技巧】{@code public static final String} 常數類；私有建構子防止實例化。
+ * <p>【概念】錯誤碼是「機器可讀契約」：前端／測試可依碼分支，訊息則可本地化。
+ * <br>若到處硬編碼字串，重構時易漏改；集中常數讓 IDE 能找到所有引用。
+ * <p>【邊界】不負責 HTTP 狀態碼映射（由 {@link com.trading.config.GlobalExceptionHandler} 決定）。
  */
 public final class ErrorCodes {
 

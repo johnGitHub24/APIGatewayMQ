@@ -19,8 +19,8 @@ import static org.mockito.Mockito.verify;
 
 /**
  * 【職責】保護 {@link OutcomeRecordService#recordOutcome} 寫入結果事件。
- * 【技巧】Captor 檢查 payload JSON 含成交與持倉欄位。
- * 【概念】閉環要留下「成交當下的倉與未實現」，方便事後回顧。
+ * <p>【技巧】Captor 檢查 payload JSON 含成交與持倉欄位。
+ * <p>【概念】閉環要留下「成交當下的倉與未實現」，方便事後回顧。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

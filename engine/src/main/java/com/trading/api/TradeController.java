@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 【職責】成交（Trade）查詢 API：單筆明細與分頁列表。
- * 【技巧】薄 Controller；{@link PageRequest} + Mapper；可選 {@code orderId} 過濾。
- * 【概念】成交是訂單被撮合後的實際買賣紀錄；一筆訂單可對應多筆部分成交。
- * 【邊界】不建立成交（由 {@link com.trading.application.TradingService} 在成交流程寫入）；只讀查詢。
+ * <p>【技巧】薄 Controller；{@link PageRequest} + Mapper；可選 {@code orderId} 過濾。
+ * <p>【概念】成交是訂單被撮合後的實際買賣紀錄；一筆訂單可對應多筆部分成交。
+ * <p>【邊界】不建立成交（由 {@link com.trading.application.TradingService} 在成交流程寫入）；只讀查詢。
  */
 @RestController
 @RequestMapping("/api/v1/trades")
@@ -30,8 +30,8 @@ public class TradeController {
 
     /**
      * 【職責】查詢單筆成交明細。
-     * 【技巧】{@code getById} + {@code toTradeDetail}。
-     * 【概念】明細含所屬訂單、成交價、數量與時間，供對帳與稽核。
+     * <p>【技巧】{@code getById} + {@code toTradeDetail}。
+     * <p>【概念】明細含所屬訂單、成交價、數量與時間，供對帳與稽核。
      * @param tradeId 成交主鍵
      * @return 成交明細回應
      */
@@ -42,8 +42,8 @@ public class TradeController {
 
     /**
      * 【職責】分頁列出成交紀錄，可依訂單過濾。
-     * 【技巧】夾住 size；{@link Page#map} 轉 DTO；組 {@link PagedResponse}。
-     * 【概念】「這張單成交了幾次？」用 orderId 過濾即可，不必掃全表。
+     * <p>【技巧】夾住 size；{@link Page#map} 轉 DTO；組 {@link PagedResponse}。
+     * <p>【概念】「這張單成交了幾次？」用 orderId 過濾即可，不必掃全表。
      * @param orderId 可選訂單主鍵
      * @param page    頁碼（從 0）
      * @param size    每頁筆數（預設 20，上限 100）

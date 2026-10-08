@@ -18,8 +18,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * 【職責】保護 {@link MarketService#getContext(String)} 教學用後綴推導。
- * 【技巧】固定 {@link RiskProperties} 預設值；Mock 近期下單次數。
- * 【概念】風控規則是純函數，市場上下文必須可重現。
+ * <p>【技巧】固定 {@link RiskProperties} 預設值；Mock 近期下單次數。
+ * <p>【概念】風控規則是純函數，市場上下文必須可重現。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

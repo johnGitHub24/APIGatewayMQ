@@ -34,8 +34,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * 【職責】保護 {@link TradingService} 下單／補成交／取消的狀態機契約。
- * 【技巧】Mockito 隔離風控、撮合與持久化；Case ID 與整合層同一預期。
- * 【概念】單元層驗證編排順序與例外語意；整合層再驗 DB／HTTP。
+ * <p>【技巧】Mockito 隔離風控、撮合與持久化；Case ID 與整合層同一預期。
+ * <p>【概念】單元層驗證編排順序與例外語意；整合層再驗 DB／HTTP。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

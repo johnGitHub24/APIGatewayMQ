@@ -16,8 +16,8 @@ import java.util.List;
 
 /**
  * 【職責】保護 {@link EngineProxyService#forward}：無 Engine 時失敗；有節點時透傳狀態與 body。
- * 【技巧】{@code WebClient.builder().exchangeFunction} 模擬下游，免真實 HTTP。
- * 【概念】Gateway 代理不解析業務 JSON，只轉發位元組與狀態碼。
+ * <p>【技巧】{@code WebClient.builder().exchangeFunction} 模擬下游，免真實 HTTP。
+ * <p>【概念】Gateway 代理不解析業務 JSON，只轉發位元組與狀態碼。
  */
 @Tag("unit")
 class EngineProxyServiceTest {

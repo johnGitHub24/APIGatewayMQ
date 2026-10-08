@@ -27,8 +27,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * 【職責】保護 {@link OrderService} 建單、狀態標記與查詢。
- * 【技巧】Mockito 驗證寫入欄位與分頁分支。
- * 【概念】訂單持久化與風控編排分離，單測只驗資料怎麼存。
+ * <p>【技巧】Mockito 驗證寫入欄位與分頁分支。
+ * <p>【概念】訂單持久化與風控編排分離，單測只驗資料怎麼存。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

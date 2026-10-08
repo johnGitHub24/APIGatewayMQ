@@ -17,12 +17,12 @@ import java.util.Map;
 
 /**
  * 【職責】註冊 Gateway 作為 Kafka Producer 所需的 {@link ObjectMapper}、{@link ProducerFactory}、{@link KafkaTemplate}。
- * 【技巧】{@code @Configuration} + {@code @Bean}；{@code acks=all} 與 {@code enable.idempotence=true} 提高送件可靠度；
- *         value 用 {@link JsonSerializer}，並關閉 type headers（{@code setAddTypeInfo(false)}）以免跨服務反序列化綁死類名。
- * 【概念】非同步下單路徑：HTTP → Producer → {@code order.commands} → Engine Consumer。
- *         與 WebClient 同步代理互補——寫入走 MQ 削峰，讀取／取消仍可走 HTTP。
- * 【邊界】只組態 Producer；不發送訊息（由 {@link com.trading.gateway.service.OrderCommandProducer} 負責）。
- *         Broker 位址來自 {@code spring.kafka.bootstrap-servers}，正式環境請用環境變數覆寫。
+ * <p>【技巧】{@code @Configuration} + {@code @Bean}；{@code acks=all} 與 {@code enable.idempotence=true} 提高送件可靠度；
+ * <br>value 用 {@link JsonSerializer}，並關閉 type headers（{@code setAddTypeInfo(false)}）以免跨服務反序列化綁死類名。
+ * <p>【概念】非同步下單路徑：HTTP → Producer → {@code order.commands} → Engine Consumer。
+ * <br>與 WebClient 同步代理互補——寫入走 MQ 削峰，讀取／取消仍可走 HTTP。
+ * <p>【邊界】只組態 Producer；不發送訊息（由 {@link com.trading.gateway.service.OrderCommandProducer} 負責）。
+ * <br>Broker 位址來自 {@code spring.kafka.bootstrap-servers}，正式環境請用環境變數覆寫。
  */
 @Configuration
 public class KafkaProducerConfig {
@@ -33,8 +33,8 @@ public class KafkaProducerConfig {
 
     /**
      * 【職責】提供可序列化 {@link java.time.Instant} 等 Java Time 型別的 {@link ObjectMapper}。
-     * 【技巧】註冊 {@link JavaTimeModule}，否則 Instant 預設會變成 timestamp 數字或序列化失敗。
-     * 【概念】Jackson 預設不懂 JSR-310；模組是「教 ObjectMapper 認識新型別」的擴充點。
+     * <p>【技巧】註冊 {@link JavaTimeModule}，否則 Instant 預設會變成 timestamp 數字或序列化失敗。
+     * <p>【概念】Jackson 預設不懂 JSR-310；模組是「教 ObjectMapper 認識新型別」的擴充點。
      *
      * @return 已註冊 JavaTimeModule 的 mapper，供 JsonSerializer 使用
      */
@@ -47,8 +47,8 @@ public class KafkaProducerConfig {
 
     /**
      * 【職責】建立 Kafka Producer 工廠：broker、字串 key、JSON value、acks／冪等。
-     * 【技巧】{@link DefaultKafkaProducerFactory} 搭配自訂 {@link JsonSerializer}；key 用 {@link StringSerializer}。
-     * 【概念】ProducerFactory 是「如何建立 Producer」的藍圖；業務碼通常只碰 KafkaTemplate，不必直接管連線細節。
+     * <p>【技巧】{@link DefaultKafkaProducerFactory} 搭配自訂 {@link JsonSerializer}；key 用 {@link StringSerializer}。
+     * <p>【概念】ProducerFactory 是「如何建立 Producer」的藍圖；業務碼通常只碰 KafkaTemplate，不必直接管連線細節。
      *
      * @param objectMapper 用於 value 的 JSON 序列化
      * @return 可注入容器的 {@link ProducerFactory}
@@ -68,8 +68,8 @@ public class KafkaProducerConfig {
 
     /**
      * 【職責】建立 {@link KafkaTemplate}，供 {@link com.trading.gateway.service.OrderCommandProducer} 非同步送件。
-     * 【技巧】Spring Kafka 的高階 API：{@code send(topic, key, value)} 回傳 {@link java.util.concurrent.CompletableFuture}。
-     * 【概念】Template 模式把「重複的 Producer 樣板碼」收進框架，業務只關心 topic／key／payload。
+     * <p>【技巧】Spring Kafka 的高階 API：{@code send(topic, key, value)} 回傳 {@link java.util.concurrent.CompletableFuture}。
+     * <p>【概念】Template 模式把「重複的 Producer 樣板碼」收進框架，業務只關心 topic／key／payload。
      *
      * @param producerFactory 由 {@link #producerFactory} 建立
      * @return 可非同步送件的 Kafka 範本

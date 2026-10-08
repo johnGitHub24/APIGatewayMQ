@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 
 /**
  * 【職責】R002 總曝險上限：既有曝險＋本單名目不得超過上限。
- * 【技巧】{@code @Order(8)}；{@code quantity * price} 當本單曝險，與 {@code totalExposure} 相加比較。
- * 【概念】單一標的沒爆、帳戶整體仍可能過大——需要「組合風險」上限。
- * 【邊界】不計算波動調整後的風險值（VaR）；用簡化名目曝險教學。
+ * <p>【技巧】{@code @Order(8)}；{@code quantity * price} 當本單曝險，與 {@code totalExposure} 相加比較。
+ * <p>【概念】單一標的沒爆、帳戶整體仍可能過大——需要「組合風險」上限。
+ * <p>【邊界】不計算波動調整後的風險值（VaR）；用簡化名目曝險教學。
  */
 @Component
 @Order(8)
@@ -33,8 +33,8 @@ public class ExposureLimitRule implements RiskRule {
 
     /**
      * 【職責】驗證投影後總曝險是否超標。
-     * 【技巧】{@code compareTo(maxTotalExposure) > 0} 則拒絕。
-     * 【概念】「投影」＝假設本單成交後的曝險，事前擋比事後砍倉便宜。
+     * <p>【技巧】{@code compareTo(maxTotalExposure) > 0} 則拒絕。
+     * <p>【概念】「投影」＝假設本單成交後的曝險，事前擋比事後砍倉便宜。
      * @param context 含 totalExposure 的訂單上下文
      * @param market  市場情境（本規則未使用）
      * @return 超限拒絕或放行

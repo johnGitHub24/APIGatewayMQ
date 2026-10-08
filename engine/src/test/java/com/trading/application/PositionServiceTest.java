@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * 【職責】保護 {@link PositionService} 查詢、曝險與成交後持倉更新。
- * 【技巧】Mock Repository；真實 {@link PnLCalculator} 可選，此處 mock 未實現損益。
- * 【概念】持倉是風控輸入也是成交輸出，單測鎖定加減倉與均價語意。
+ * <p>【技巧】Mock Repository；真實 {@link PnLCalculator} 可選，此處 mock 未實現損益。
+ * <p>【概念】持倉是風控輸入也是成交輸出，單測鎖定加減倉與均價語意。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)

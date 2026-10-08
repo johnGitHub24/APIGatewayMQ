@@ -13,9 +13,9 @@ import java.time.OffsetDateTime;
 
 /**
  * 【職責】映射 {@code orders}：儲存下單核心欄位、成交進度、狀態與風控拒絕資訊。
- * 【技巧】JPA Entity；{@code client_order_id} unique 支援冪等；enum 以 STRING 持久化。
- * 【概念】訂單是交易主檔；成交／事件／持倉都圍繞 orderId 關聯。Entity 只反映「存什麼」，狀態轉移在 Service。
- * 【邊界】不含風控規則執行或 Kafka 消費編排。
+ * <p>【技巧】JPA Entity；{@code client_order_id} unique 支援冪等；enum 以 STRING 持久化。
+ * <p>【概念】訂單是交易主檔；成交／事件／持倉都圍繞 orderId 關聯。Entity 只反映「存什麼」，狀態轉移在 Service。
+ * <p>【邊界】不含風控規則執行或 Kafka 消費編排。
  */
 @Getter
 @Setter

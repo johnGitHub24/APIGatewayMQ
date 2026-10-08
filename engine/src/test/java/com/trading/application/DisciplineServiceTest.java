@@ -20,8 +20,8 @@ import static org.mockito.Mockito.verify;
 
 /**
  * 【職責】保護 {@link DisciplineService#evaluate} 僅在頻率超標時寫紀律事件。
- * 【技巧】調整 {@link RiskProperties#getDisciplineOrderThreshold()} 對照 recentOrderCount。
- * 【概念】紀律標記不是硬拒單，與 R006 硬上限分層。
+ * <p>【技巧】調整 {@link RiskProperties#getDisciplineOrderThreshold()} 對照 recentOrderCount。
+ * <p>【概念】紀律標記不是硬拒單，與 R006 硬上限分層。
  */
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
